@@ -1368,25 +1368,454 @@ def dibujar_muro_contrafuertes(dimensiones, resultados, datos_entrada):
     return fig
 
 # Configuración de la página
+# ─── Tema AURUS PRIME / Rappi (negro · dorado) ───────────────────────────────
+GOLD = "#D4AF37"
+GOLD_LIGHT = "#FFD700"
+GOLD_DARK = "#8B6914"
+BG_DARK = "#0a0a0a"
+BG_CARD = "#141414"
+BG_PANEL = "#111111"
+
+APP_OPCIONES = [
+    "🏗️ Cálculo Básico",
+    "📊 Análisis Completo (Rankine)",
+    "🔬 Análisis Coulomb",
+    "🏗️ Diseño del Fuste",
+    "📄 Generar Reporte",
+    "📈 Gráficos",
+    "ℹ️ Acerca de",
+    "✉️ Contacto",
+]
+
+SIDEBAR_SECCIONES = [
+    ("Restaurantes", APP_OPCIONES[0]),
+    ("Supermercados", APP_OPCIONES[1]),
+    ("Farmacia", APP_OPCIONES[2]),
+    ("Express", APP_OPCIONES[3]),
+    ("Rappi mall", APP_OPCIONES[4]),
+    ("Licores", APP_OPCIONES[5]),
+    ("Rappi Travel", APP_OPCIONES[6]),
+    ("Turbo-Fresh", APP_OPCIONES[7]),
+    ("Regalos", "💰 Planes y Precios"),
+]
+
+def inject_aurus_theme():
+    st.markdown(f"""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+    html, body, [class*="css"] {{ font-family: 'Poppins', sans-serif !important; }}
+    .stApp {{ background: {BG_DARK}; color: #f5f5f5; }}
+    [data-testid="stHeader"] {{ background: transparent !important; }}
+    [data-testid="stToolbar"], [data-testid="stDecoration"] {{ display: none !important; }}
+    footer {{ visibility: hidden !important; }}
+    .block-container {{ padding-top: 0.5rem !important; max-width: 100% !important; }}
+    [data-testid="stSidebar"] {{
+        background: #ffffff !important;
+        border-right: 1px solid #eee;
+        min-width: 300px !important;
+        max-width: 320px !important;
+    }}
+    [data-testid="stSidebar"] * {{ color: #1a1a1a !important; }}
+    [data-testid="stSidebar"] .stButton > button {{
+        background: transparent !important;
+        color: #1a1a1a !important;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        font-weight: 600 !important;
+        text-align: left !important;
+        padding: 10px 0 !important;
+        width: 100% !important;
+        justify-content: flex-start !important;
+    }}
+    [data-testid="stSidebar"] .stButton > button:hover {{
+        background: #f5f5f5 !important;
+        color: {GOLD_DARK} !important;
+    }}
+    [data-testid="stSidebar"] hr {{ border-color: #eee !important; margin: 12px 0 !important; }}
+    .main .stButton > button {{
+        background: linear-gradient(135deg, {GOLD_LIGHT}, {GOLD}) !important;
+        color: #0a0a0a !important;
+        border: none !important;
+        border-radius: 999px !important;
+        font-weight: 700 !important;
+    }}
+    [data-testid="stTextInput"] input,
+    [data-testid="stNumberInput"] input {{
+        background: #fff !important;
+        color: #333 !important;
+        border: 1px solid #ddd !important;
+        border-radius: 8px !important;
+    }}
+    [data-testid="stMainBlockContainer"] h1,
+    [data-testid="stMainBlockContainer"] h2,
+    [data-testid="stMainBlockContainer"] h3,
+    [data-testid="stMainBlockContainer"] p,
+    [data-testid="stMainBlockContainer"] label {{
+        color: #f0e6c8 !important;
+    }}
+    .rappi-nav {{
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 16px; padding: 12px 32px; background: #fff;
+        border-bottom: 1px solid #eee; flex-wrap: wrap;
+    }}
+    .rappi-logo {{ font-size: 2rem; font-weight: 800; color: {GOLD}; letter-spacing: -1px; }}
+    .rappi-loc {{ display: flex; align-items: center; gap: 6px; color: #333; font-weight: 600; font-size: 0.9rem; }}
+    .rappi-search {{
+        display: flex; align-items: center; flex: 1; max-width: 560px;
+        background: #f5f5f5; border-radius: 8px; padding: 10px 16px; margin: 0 auto;
+    }}
+    .rappi-search input {{ border: none; background: transparent; flex: 1; font-size: 0.92rem; color: #888; outline: none; width: 100%; }}
+    .rappi-hero-greet {{
+        background: linear-gradient(135deg, #1a1408 0%, {GOLD_DARK} 40%, {GOLD} 100%);
+        padding: 48px 32px 56px; text-align: center;
+    }}
+    .rappi-hero-greet h1 {{ color: #fff !important; font-size: 2.4rem; font-weight: 700; margin-bottom: 24px; }}
+    .rappi-loc-box {{
+        max-width: 520px; margin: 0 auto; background: #fff; border-radius: 8px;
+        padding: 16px 20px; display: flex; align-items: center; gap: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15); text-align: left;
+    }}
+    .rappi-loc-box span {{ color: #999; font-size: 0.95rem; }}
+    .rappi-loc-link {{ color: #fff; font-size: 0.88rem; margin-top: 14px; display: inline-flex; align-items: center; gap: 6px; opacity: 0.95; }}
+    .rappi-section {{ padding: 32px 32px 16px; background: {BG_DARK}; }}
+    .rappi-section-white {{ padding: 32px; background: #121212; }}
+    .rappi-h2 {{ font-size: 1.15rem; font-weight: 700; color: #fff !important; margin-bottom: 18px; }}
+    .rappi-h2-sm {{ font-size: 0.95rem; font-weight: 700; color: #ccc !important; margin-bottom: 14px; }}
+    .rappi-tags {{ display: flex; flex-wrap: wrap; gap: 10px; }}
+    .rappi-tag {{
+        background: #1e1e1e; border: 1px solid #333; border-radius: 999px;
+        padding: 8px 18px; font-size: 0.88rem; color: #eee; font-weight: 500;
+    }}
+    .rappi-services {{
+        display: flex; gap: 20px; overflow-x: auto; padding-bottom: 12px;
+        scrollbar-width: thin;
+    }}
+    .rappi-svc {{
+        flex: 0 0 90px; text-align: center;
+    }}
+    .rappi-svc-icon {{
+        width: 72px; height: 72px; border-radius: 16px; background: #1a1a1a;
+        border: 1px solid rgba(212,175,55,0.25); display: flex; align-items: center;
+        justify-content: center; font-size: 2rem; margin: 0 auto 8px;
+    }}
+    .rappi-svc-label {{ font-size: 0.72rem; color: {GOLD} !important; font-weight: 600; line-height: 1.2; }}
+    .rappi-brands {{ display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px; }}
+    .rappi-brand {{ flex: 0 0 72px; text-align: center; }}
+    .rappi-brand-circle {{
+        width: 64px; height: 64px; border-radius: 50%; background: #fff;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.6rem; margin: 0 auto 6px; border: 2px solid #eee;
+    }}
+    .rappi-brand-name {{ font-size: 0.68rem; color: {GOLD} !important; font-weight: 600; }}
+    .rappi-join-title {{ text-align: center; font-size: 2rem; font-weight: 700; color: #fff !important; margin: 40px 0 28px; }}
+    .rappi-join-title em {{ color: {GOLD}; font-style: normal; }}
+    .rappi-cards {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 1100px; margin: 0 auto; }}
+    @media (max-width: 900px) {{ .rappi-cards {{ grid-template-columns: 1fr; }} }}
+    .rappi-card {{
+        background: #161616; border-radius: 12px; overflow: hidden;
+        border: 1px solid rgba(212,175,55,0.2); text-align: center;
+    }}
+    .rappi-card img {{ width: 100%; height: 160px; object-fit: cover; }}
+    .rappi-card h3 {{ font-size: 1rem; font-weight: 700; color: #fff !important; padding: 16px 12px 8px; }}
+    .rappi-card p {{ font-size: 0.82rem; color: #aaa !important; padding: 0 16px 16px; line-height: 1.45; }}
+    .rappi-card-btn {{
+        display: block; margin: 0 16px 20px; padding: 12px;
+        background: rgba(212,175,55,0.15); color: {GOLD} !important;
+        border-radius: 8px; font-weight: 700; font-size: 0.88rem; text-decoration: none;
+        border: 1px solid rgba(212,175,55,0.35);
+    }}
+    .rappi-float-promo {{
+        position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+        z-index: 999; display: flex; align-items: center; gap: 10px;
+        background: linear-gradient(90deg, {GOLD_DARK}, {GOLD});
+        color: #0a0a0a; padding: 14px 28px; border-radius: 8px;
+        font-weight: 700; font-size: 0.92rem; box-shadow: 0 8px 32px rgba(212,175,55,0.45);
+        white-space: nowrap;
+    }}
+    .rappi-float-badge {{
+        background: #0a0a0a; color: {GOLD_LIGHT}; width: 32px; height: 32px;
+        border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800;
+    }}
+    .rappi-footer {{
+        display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+        padding: 40px 32px; background: #080808; border-top: 1px solid #222;
+    }}
+    @media (max-width: 768px) {{ .rappi-footer {{ grid-template-columns: 1fr; }} }}
+    .rappi-footer h4 {{ font-size: 0.82rem; font-weight: 700; color: {GOLD} !important; margin-bottom: 12px; }}
+    .rappi-footer p {{ font-size: 0.78rem; color: #888 !important; line-height: 1.6; }}
+    .sb-header {{ display: flex; justify-content: space-between; align-items: center; padding: 8px 0 16px; }}
+    .sb-logo {{ font-size: 1.8rem; color: {GOLD}; font-weight: 800; }}
+    .sb-close {{ width: 32px; height: 32px; border-radius: 50%; background: #eee; display: flex; align-items: center; justify-content: center; color: #666; font-size: 0.9rem; }}
+    .sb-user {{ display: flex; align-items: center; gap: 12px; padding: 12px 0; }}
+    .sb-avatar {{ width: 44px; height: 44px; border-radius: 50%; background: rgba(212,175,55,0.2); color: {GOLD_DARK}; font-weight: 800; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; }}
+    .sb-hello {{ font-size: 0.95rem; font-weight: 700; color: #1a1a1a !important; }}
+    .sb-star {{ color: {GOLD}; font-size: 0.75rem; }}
+    .sb-promo-box {{
+        background: rgba(212,175,55,0.12); border-radius: 10px; padding: 14px 16px;
+        display: flex; align-items: center; gap: 12px; margin: 12px 0;
+        border: 1px solid rgba(212,175,55,0.25);
+    }}
+    .sb-promo-box span {{ font-size: 0.88rem; font-weight: 700; color: {GOLD_DARK} !important; }}
+    .sb-label {{ font-size: 0.68rem; font-weight: 700; color: #999 !important; letter-spacing: 0.5px; text-transform: uppercase; margin: 16px 0 8px; }}
+    .sb-row {{ display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 0.88rem; font-weight: 600; color: #1a1a1a !important; }}
+    .sb-row .chev {{ color: #ccc; font-size: 0.8rem; }}
+    .sb-vermas {{ color: {GOLD_DARK}; font-weight: 700; font-size: 0.88rem; padding: 10px 0; }}
+    .sb-credits {{ display: flex; justify-content: space-between; padding: 8px 0; font-size: 0.88rem; }}
+    .sb-credits strong {{ font-weight: 800; }}
+    .sb-logout {{ color: #999 !important; font-size: 0.85rem; padding: 16px 0 8px; }}
+    .rappi-auth-wrap {{
+        max-width: 480px; margin: 24px auto 80px; padding: 28px;
+        background: #161616; border-radius: 16px; border: 1px solid rgba(212,175,55,0.3);
+    }}
+    .rappi-auth-wrap h3 {{ color: {GOLD_LIGHT} !important; text-align: center; font-size: 1.2rem; }}
+    .rappi-main-bar {{
+        padding: 10px 24px; background: #fff; border-bottom: 1px solid #eee; margin-bottom: 0;
+    }}
+    .rappi-main-bar .rappi-logo {{ font-size: 1.5rem; }}
+    .rappi-top-promo {{
+        display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 16px;
+        padding: 10px 24px; background: linear-gradient(90deg, #0a0a0a, #1a1408, #0a0a0a);
+        border-bottom: 1px solid rgba(212,175,55,0.3); color: #fff; font-size: 0.9rem;
+    }}
+    .rappi-content-panel {{
+        background: #f8f8f8; border-radius: 12px; padding: 24px; margin: 16px 24px;
+        border: 1px solid #eee;
+    }}
+    .rappi-content-panel h1, .rappi-content-panel h2, .rappi-content-panel h3,
+    .rappi-content-panel p, .rappi-content-panel label, .rappi-content-panel span {{
+        color: #1a1a1a !important;
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+
+def render_rappi_navbar(location="Ingresar mi ubicación", search_ph="Comida, restaurantes, tiendas, productos..."):
+    st.markdown(f"""
+    <div class="rappi-nav">
+        <div style="display:flex;align-items:center;gap:20px;">
+            <div class="rappi-logo">Rappi</div>
+            <div class="rappi-loc">📍 {location} ▾</div>
+        </div>
+        <div class="rappi-search">
+            <span style="margin-right:8px;color:{GOLD};">🥸</span>
+            <input type="text" placeholder="{search_ph}" readonly />
+            <span style="margin-left:8px;color:#aaa;">🔍</span>
+        </div>
+        <div style="width:36px;height:36px;border-radius:50%;background:#eee;display:flex;align-items:center;justify-content:center;">👤</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+def render_greeting_hero():
+    st.markdown("""
+    <div class="rappi-hero-greet">
+        <h1>Hola, buenos días.</h1>
+        <div class="rappi-loc-box">
+            <span>📍</span>
+            <span>¿Dónde quieres recibir tu compra?</span>
+        </div>
+        <div class="rappi-loc-link">🎯 Usa tu ubicación actual</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+def render_service_categories():
+    services = [
+        ("🍔", "Restaurantes"), ("🛒", "Supermercados"), ("💊", "Farmacia"),
+        ("🛍️", "Express"), ("🏬", "Rappi mall"), ("🍾", "Licores"),
+        ("📦", "La Cesta"), ("✈️", "Rappi Travel"), ("⚡", "Turbo"), ("🎁", "Regalos"),
+    ]
+    items = "".join(
+        f'<div class="rappi-svc"><div class="rappi-svc-icon">{icon}</div><div class="rappi-svc-label">{label} ›</div></div>'
+        for icon, label in services
+    )
+    st.markdown(f"""
+    <div class="rappi-section-white">
+        <div class="rappi-h2">¿Necesitas algo más?</div>
+        <div class="rappi-services">{items}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+def render_trending_tags():
+    tags = ["Mundial", "Makis", "Gaseosa", "Cerveza", "Pizza", "Snack", "Pollo a la brasa", "Chifa", "Pollo", "Postres"]
+    tag_html = "".join(f'<span class="rappi-tag">{t}</span>' for t in tags)
+    st.markdown(f"""
+    <div class="rappi-section">
+        <div class="rappi-h2-sm">Lo más buscado</div>
+        <div class="rappi-tags">{tag_html}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+def render_top_brands():
+    brands = [
+        ("🍟", "McDonald's"), ("🍔", "Bembos"), ("🍗", "Popeyes"), ("🍕", "Papa John's"),
+        ("🥡", "China Wok"), ("🍗", "KFC"), ("🍕", "Little Caesars"), ("🍽️", "Fridays"),
+        ("🍩", "Dunkin'"), ("🥪", "Subway"),
+    ]
+    items = "".join(
+        f'<div class="rappi-brand"><div class="rappi-brand-circle">{icon}</div><div class="rappi-brand-name">{name}</div></div>'
+        for icon, name in brands
+    )
+    st.markdown(f"""
+    <div class="rappi-section">
+        <div class="rappi-h2-sm">¡Los 10 más elegidos!</div>
+        <div class="rappi-brands">{items}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+def render_join_section():
+    st.markdown(f"""
+    <div class="rappi-section">
+        <div class="rappi-join-title">Únete a <em>Rappi</em></div>
+        <div class="rappi-cards">
+            <div class="rappi-card">
+                <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&q=80" alt="Restaurante"/>
+                <h3>Registra tu restaurante</h3>
+                <p>Únete a la red de restaurantes más grande de Latinoamérica y recibe más pedidos.</p>
+                <span class="rappi-card-btn">Conocer más</span>
+            </div>
+            <div class="rappi-card">
+                <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&q=80" alt="Comercio"/>
+                <h3>Registra tu comercio</h3>
+                <p>Vende tus productos en Rappi y llega a miles de clientes en tu ciudad.</p>
+                <span class="rappi-card-btn">Conocer más</span>
+            </div>
+            <div class="rappi-card">
+                <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80" alt="Repartidor"/>
+                <h3>¡Únete como repartidor!</h3>
+                <p>Genera ingresos extras entregando pedidos con horarios flexibles.</p>
+                <span class="rappi-card-btn">¡Regístrate ahora!</span>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+def render_floating_promo():
+    st.markdown("""
+    <div class="rappi-float-promo">
+        <div class="rappi-float-badge">%</div>
+        Descubre las <strong>PROMOCIONES</strong> que tenemos para ti
+    </div>
+    """, unsafe_allow_html=True)
+
+def render_footer():
+    st.markdown("""
+    <div class="rappi-footer">
+        <div>
+            <h4>Top Marcas y Cadenas de Restaurantes</h4>
+            <p>McDonald's · Bembos · KFC · Papa John's · China Wok · Little Caesars · Dunkin' · Subway</p>
+        </div>
+        <div>
+            <h4>Encuéntranos en estos países</h4>
+            <p>Perú · Colombia · México · Brasil · Chile · Argentina · Ecuador · Uruguay · Costa Rica</p>
+        </div>
+        <div>
+            <h4>Pide tu comida favorita cerca de ti</h4>
+            <p>Arequipa · Lima · Cusco · Trujillo · Piura · Chiclayo · Iquitos · Huancayo</p>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+def render_rappi_sidebar(user_name="GRUPO", logged_in=False, show_all_sections=True):
+    initial = user_name[0].upper() if user_name else "G"
+    st.sidebar.markdown(f"""
+    <div class="sb-header">
+        <div class="sb-logo">🥸</div>
+        <div class="sb-close">✕</div>
+    </div>
+    <div class="sb-user">
+        <div class="sb-avatar">{initial}</div>
+        <div>
+            <div class="sb-hello">Hola, <strong>{user_name.upper()}</strong></div>
+            <div class="sb-star">⭐</div>
+        </div>
+    </div>
+    <div class="sb-promo-box">
+        <span>🏷️⚽</span>
+        <span>Descubre nuestras promociones</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.sidebar.markdown('<div class="sb-label">Secciones</div>', unsafe_allow_html=True)
+    sections = SIDEBAR_SECCIONES if show_all_sections else SIDEBAR_SECCIONES[:4]
+    for label, _ in sections:
+        if st.sidebar.button(f"{label}  ›", key=f"sb_sec_{label}"):
+            if logged_in:
+                if _ == "💰 Planes y Precios":
+                    st.session_state["show_pricing"] = True
+                else:
+                    st.session_state["opcion"] = _
+                    st.session_state["show_pricing"] = False
+            else:
+                st.session_state["auth_tab"] = "register" if label == "Regalos" else "login"
+            st.rerun()
+
+    if show_all_sections:
+        st.sidebar.markdown('<div class="sb-vermas">Ver menos</div>', unsafe_allow_html=True)
+    else:
+        st.sidebar.markdown('<div class="sb-vermas">Ver más</div>', unsafe_allow_html=True)
+
+    st.sidebar.markdown("---")
+    st.sidebar.markdown('<div class="sb-label">Promociones y créditos:</div>', unsafe_allow_html=True)
+    st.sidebar.markdown("""
+    <div class="sb-credits"><span>Créditos</span><strong>S/ 0.00</strong></div>
+    """, unsafe_allow_html=True)
+
+    st.sidebar.markdown('<div class="sb-label">Tu perfil:</div>', unsafe_allow_html=True)
+    for item in ["Información de mi cuenta", "Métodos de pagos", "Últimas órdenes"]:
+        st.sidebar.markdown(f'<div class="sb-row"><span>{item}</span><span class="chev">›</span></div>', unsafe_allow_html=True)
+
+    st.sidebar.markdown('<div class="sb-label">Otros</div>', unsafe_allow_html=True)
+    for item in ["Registra tu restaurante", "Registra tu tienda", "Quiero ser Rappitender@", "Pauta en Rappi"]:
+        st.sidebar.markdown(f'<div class="sb-row"><span>{item}</span><span class="chev">›</span></div>', unsafe_allow_html=True)
+
+    st.sidebar.markdown("""
+    <div class="sb-row"><span>🇵🇪 Perú</span><span class="chev">›</span></div>
+    """, unsafe_allow_html=True)
+
+def render_top_promo_banner():
+    if st.session_state.get("promo_dismissed"):
+        return
+    st.markdown("""
+    <div class="rappi-top-promo">
+        <span>🛵</span>
+        <span><strong>¿Nuevo en Rappi?</strong> Disfruta de envíos gratis por semanas</span>
+    </div>
+    """, unsafe_allow_html=True)
+    c1, c2, c3, c4 = st.columns([3, 1, 1, 0.3])
+    with c2:
+        if st.button("Registrarme", key="top_promo_reg"):
+            st.session_state["auth_tab"] = "register"
+            st.rerun()
+    with c3:
+        st.markdown('<p style="text-align:center;margin-top:6px;font-size:0.82rem;"><a href="#" style="color:#fff;">Términos y condiciones</a></p>', unsafe_allow_html=True)
+    with c4:
+        if st.button("✕", key="top_promo_close"):
+            st.session_state["promo_dismissed"] = True
+            st.rerun()
+
+def render_app_navbar(subtitle="Diseño y Análisis de Muros de Contención"):
+    st.markdown(f"""
+    <div class="rappi-main-bar">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+            <div class="rappi-logo">Rappi</div>
+            <div style="color:#666;font-size:0.85rem;font-weight:500;">{subtitle}</div>
+            <div class="rappi-loc">📍 Arequipa ▾</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
 st.set_page_config(
-    page_title="CONSORCIO DEJ - Muros de Contención",
-    page_icon="🏗️",
-    layout="wide"
+    page_title="Rappi - AURUS PRIME",
+    page_icon="🥸",
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-# Header con fondo amarillo
-st.markdown("""
-<div style="text-align: center; padding: 20px; background-color: #FFD700; color: #2F2F2F; border-radius: 10px; margin-bottom: 20px; border: 2px solid #FFA500;">
-    <h1>🏗️ CONSORCIO DEJ</h1>
-    <p style="font-size: 18px; font-weight: bold;">Ingeniería y Construcción</p>
-    <p style="font-size: 14px;">Diseño y Análisis de Muros de Contención</p>
-</div>
-""", unsafe_allow_html=True)
+inject_aurus_theme()
 
 # Sistema de autenticación y pagos
 def show_pricing_page():
     """Mostrar página de precios y planes"""
-    st.title("💰 Planes y Precios - CONSORCIO DEJ")
+    st.title("💰 Planes y Precios - AURUS PRIME")
     
     # Verificar si es administrador
     is_admin = st.session_state.get('user') == 'admin'
@@ -1569,12 +1998,41 @@ def show_payment_form(plan):
             st.info("🔧 Contacta al administrador para activar el sistema")
 
 def show_auth_page():
-    st.title("🏗️ CONSORCIO DEJ - Muros de Contención")
-    
-    # Pestañas para login/registro
-    tab1, tab2, tab3 = st.tabs(["🔐 Iniciar Sesión", "📝 Registrarse", "💰 Planes y Precios"])
-    
-    with tab1:
+    render_rappi_sidebar(user_name="GRUPO", logged_in=False, show_all_sections=True)
+    render_rappi_navbar()
+    render_top_promo_banner()
+    render_greeting_hero()
+    render_service_categories()
+    render_floating_promo()
+    render_trending_tags()
+    render_top_brands()
+    render_join_section()
+    render_footer()
+
+    st.markdown('<div class="rappi-auth-wrap">', unsafe_allow_html=True)
+    st.markdown("### Ingreso a la aplicación")
+    st.markdown("<p style='text-align:center;color:#888;font-size:0.85rem;'>Muros de contención · Rankine · Coulomb · Reportes PDF</p>", unsafe_allow_html=True)
+
+    if "auth_tab" not in st.session_state:
+        st.session_state["auth_tab"] = "login"
+
+    auth_options = ["login", "register", "pricing"]
+    auth_labels = {"login": "Iniciar Sesión", "register": "Registrarse", "pricing": "Planes y Precios"}
+    current = st.session_state.get("auth_tab", "login")
+    if current not in auth_options:
+        current = "login"
+    selected = st.radio(
+        "Sección",
+        auth_options,
+        format_func=lambda x: auth_labels[x],
+        index=auth_options.index(current),
+        horizontal=True,
+        label_visibility="collapsed",
+        key="auth_section_radio",
+    )
+    st.session_state["auth_tab"] = selected
+
+    if selected == "login":
         st.subheader("Iniciar Sesión")
         with st.form("login_form"):
             username = st.text_input("Usuario")
@@ -1611,8 +2069,8 @@ def show_auth_page():
                         st.rerun()
                     else:
                         st.error(result["message"])
-    
-    with tab2:
+
+    elif selected == "register":
         st.subheader("Crear Cuenta")
         with st.form("register_form"):
             new_username = st.text_input("Usuario", placeholder="Tu nombre de usuario")
@@ -1650,9 +2108,11 @@ def show_auth_page():
                                 st.rerun()
                         else:
                             st.error("❌ " + result["message"])
-    
-    with tab3:
+
+    elif selected == "pricing":
         show_pricing_page()
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # Verificar estado de autenticación
 if 'logged_in' not in st.session_state:
@@ -1679,90 +2139,72 @@ def update_user_plan():
     return False
 
 if not st.session_state['logged_in']:
+    if "promo_dismissed" not in st.session_state:
+        st.session_state["promo_dismissed"] = False
     show_auth_page()
 else:
-    # Actualizar plan del usuario automáticamente
+    render_app_navbar()
     plan_updated = update_user_plan()
     if plan_updated:
         st.success("🎉 ¡Tu plan ha sido actualizado!")
         st.rerun()
-    # Mostrar información del usuario
+
     user_data = st.session_state.get('user_data', {})
     plan = user_data.get('plan', 'gratuito')
-    
-    # Header con información del plan
-    if plan == "gratuito":
-        st.sidebar.info("🆓 Plan Gratuito")
-    elif plan == "premium":
-        st.sidebar.success("⭐ Plan Premium")
-    else:
-        st.sidebar.success("🏢 Plan Empresarial")
-    
-    st.sidebar.write(f"Usuario: {st.session_state['user']}")
-    st.sidebar.write(f"Plan: {plan}")
-    
-    # Botón para cerrar sesión
-    if st.sidebar.button("🚪 Cerrar Sesión"):
+    user_name = user_data.get('name') or user_data.get('username') or st.session_state.get('user', 'Usuario')
+
+    if 'opcion' not in st.session_state:
+        st.session_state['opcion'] = APP_OPCIONES[0]
+    if 'show_pricing' not in st.session_state:
+        st.session_state['show_pricing'] = False
+
+    render_rappi_sidebar(user_name=str(user_name), logged_in=True, show_all_sections=True)
+
+    st.sidebar.markdown(f"""
+    <div class="sb-credits"><span>Plan actual</span><strong>{plan.title()}</strong></div>
+    """, unsafe_allow_html=True)
+
+    if st.sidebar.button("Cerrar sesión", key="sb_logout"):
         st.session_state['logged_in'] = False
         st.session_state['user_data'] = None
         st.session_state['user'] = None
         st.session_state['plan'] = None
+        st.session_state['opcion'] = APP_OPCIONES[0]
+        st.session_state['show_pricing'] = False
         st.rerun()
-    
-    # Panel especial para administrador
+
     is_admin = st.session_state.get('user') == 'admin'
     if is_admin:
         st.sidebar.markdown("---")
-        st.sidebar.subheader("👨‍💼 Panel de Administrador")
-        st.sidebar.info("Acceso directo a todos los planes")
-        
-        col1, col2, col3 = st.sidebar.columns(3)
-        with col1:
-            if st.button("🆓 Gratuito", key="sidebar_free"):
+        st.sidebar.markdown('<div class="sb-label">Panel administrador</div>', unsafe_allow_html=True)
+        c1, c2, c3 = st.sidebar.columns(3)
+        with c1:
+            if st.button("Gratuito", key="sidebar_free"):
                 st.session_state['plan'] = "gratuito"
                 if 'user_data' in st.session_state:
                     st.session_state['user_data']['plan'] = "gratuito"
-                st.success("✅ Plan gratuito activado")
                 st.rerun()
-        
-        with col2:
-            if st.button("⭐ Premium", key="sidebar_premium"):
+        with c2:
+            if st.button("Premium", key="sidebar_premium"):
                 st.session_state['plan'] = "premium"
                 if 'user_data' in st.session_state:
                     st.session_state['user_data']['plan'] = "premium"
-                st.success("✅ Plan premium activado")
                 st.rerun()
-        
-        with col3:
-            if st.button("🏢 Empresarial", key="sidebar_enterprise"):
+        with c3:
+            if st.button("Empresarial", key="sidebar_enterprise"):
                 st.session_state['plan'] = "empresarial"
                 if 'user_data' in st.session_state:
                     st.session_state['user_data']['plan'] = "empresarial"
-                st.success("✅ Plan empresarial activado")
                 st.rerun()
-    
-    # Mostrar página de precios si se solicita
+
+    opcion = st.session_state.get('opcion', APP_OPCIONES[0])
+
     if st.session_state.get('show_pricing', False):
         show_pricing_page()
-        
-        # Botón para volver
         if st.button("← Volver a la aplicación"):
             st.session_state['show_pricing'] = False
             st.rerun()
-    else:
-        # Sidebar para navegación
-        st.sidebar.title("📋 Menú Principal")
-    
-    # Mostrar plan actual
-    if st.session_state['plan'] == "gratuito":
-        st.sidebar.info("🆓 Plan Gratuito")
-    else:
-        st.sidebar.success("⭐ Plan Premium")
-    
-    opcion = st.sidebar.selectbox("Selecciona una opción", 
-                                 ["🏗️ Cálculo Básico", "📊 Análisis Completo (Rankine)", "🔬 Análisis Coulomb", "🏗️ Diseño del Fuste", "📄 Generar Reporte", "📈 Gráficos", "ℹ️ Acerca de", "✉️ Contacto"])
-
-    if opcion == "🏗️ Cálculo Básico":
+    elif opcion == "🏗️ Cálculo Básico":
         st.title("Cálculo Básico de Muro de Contención")
         st.info("Plan gratuito: Cálculos básicos de estabilidad")
         
@@ -5173,23 +5615,4 @@ para mejorar los factores de seguridad y cumplir con las especificaciones.
         - Construcción especializada
         """)
 
-    # Mostrar plan actual en sidebar
-    if st.session_state['plan'] == "gratuito":
-        st.sidebar.info("🆓 Plan Gratuito - Funciones limitadas")
-        st.sidebar.write("Para acceder a todas las funciones, actualiza a Premium")
-        
-        # Información sobre cómo acceder al plan premium
-        st.sidebar.markdown("---")
-        st.sidebar.subheader("🔑 Acceso Premium")
-        st.sidebar.write("**Usuario:** premium")
-        st.sidebar.write("**Contraseña:** premium")
-        st.sidebar.info("Cierra sesión y vuelve a iniciar con las credenciales premium")
-    else:
-        st.sidebar.success("⭐ Plan Premium - Acceso completo")
-        
-        # Información para administradores
-        st.sidebar.markdown("---")
-        st.sidebar.subheader("👨‍💼 Panel de Administrador")
-        st.sidebar.write("**Usuario actual:** " + st.session_state['user'])
-        st.sidebar.write("**Plan:** Premium")
-        st.sidebar.success("Acceso completo a todas las funciones")
+    render_floating_promo()

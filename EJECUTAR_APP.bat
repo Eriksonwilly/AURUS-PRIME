@@ -1,0 +1,6 @@
+@echo off
+cd /d "%~dp0"
+echo Instalando dependencias...
+pip install -r requirements.txt -q
+echo Iniciando AURUS PRIME...
+streamlit run APP.py
