@@ -69,11 +69,12 @@ CITIES = ["Arequipa", "Lima", "Cusco", "Trujillo", "Piura"]
 # to scan and tap on any screen size.
 CATEGORIES = [
     {"icon": "🍽️", "name": "Restaurantes"},
-    {"icon": "🧺", "name": "Supermercados"},
+    {"icon": "🛒", "name": "Supermercados"},
     {"icon": "💊", "name": "Farmacia"},
     {"icon": "⚡", "name": "Express"},
     {"icon": "🏛️", "name": "Aurus Mall"},
     {"icon": "🍷", "name": "Licores"},
+    {"icon": "🧺", "name": "La Cesta Gourmet"},
     {"icon": "✈️", "name": "Aurus Travel"},
     {"icon": "🌿", "name": "Turbo-Fresh"},
     {"icon": "🎁", "name": "Regalos"},
@@ -89,6 +90,10 @@ FEATURED_HOUSES = [
     "Maison Verlaine", "Château Bistro", "Le Bernardin Express", "Orsini Gioielli",
     "Nord Atelier", "Casa Dorado", "Villa Cachemira", "L'Or Noir", "Ámbar & Cedro", "Silvana Home",
 ]
+
+# Muted jewel tones used to rotate the featured-house avatar backgrounds,
+# giving each circle a distinct identity without breaking the luxury palette.
+JEWEL_TONES = ["#3B1E23", "#1E2A26", "#241C33", "#2A2417", "#1C232E"]
 
 # Partner / courier acquisition cards — mirrors the reference app's
 # "Registra tu restaurante / Registra tu comercio / Únete como repartidor"
@@ -244,8 +249,23 @@ h1, h2, h3 { font-family: 'Playfair Display', serif !important; color: var(--ivo
 .section-title h2 { font-size: 1.5rem; margin:0; }
 .section-title .rule { flex:1; height:1px; background: var(--divider); }
 
-/* ---------- category icon row (simple, compact, one line each) ---------- */
-.cat-icon { font-size: 1.6rem; text-align:center; margin-bottom: 2px; }
+/* ---------- category icon row: plain icon + label + arrow, no box ---------- */
+.st-key-cat_row div.stButton > button {
+    background: transparent;
+    border: none;
+    color: var(--champagne);
+    text-transform: none;
+    letter-spacing: 0.2px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding: 12px 4px;
+    box-shadow: none;
+}
+.st-key-cat_row div.stButton > button:hover {
+    background: var(--panel);
+    border-radius: 12px;
+    color: var(--gold-light);
+}
 
 .active-banner {
     border: 1px solid var(--gold);
@@ -490,12 +510,14 @@ if st.session_state.active_category:
         unsafe_allow_html=True,
     )
 
-cat_cols = st.columns(len(CATEGORIES))
-for col, cat in zip(cat_cols, CATEGORIES):
-    with col:
-        if st.button(f"{cat['icon']}  {cat['name']}", key=f"main_{cat['name']}", use_container_width=True):
-            st.session_state.active_category = cat["name"]
-            st.rerun()
+cat_row = st.container(key="cat_row")
+with cat_row:
+    cat_cols = st.columns(len(CATEGORIES))
+    for col, cat in zip(cat_cols, CATEGORIES):
+        with col:
+            if st.button(f"{cat['icon']}   {cat['name']}  →", key=f"main_{cat['name']}", use_container_width=True):
+                st.session_state.active_category = cat["name"]
+                st.rerun()
 
 # =============================================================================
 # 10. TRENDING TAGS ("Lo más buscado")
@@ -520,10 +542,11 @@ st.markdown(
 house_cols = st.columns(5)
 for i, house in enumerate(FEATURED_HOUSES):
     initials = "".join([w[0] for w in house.split()[:2]]).upper()
+    tone = JEWEL_TONES[i % len(JEWEL_TONES)]
     with house_cols[i % 5]:
         st.markdown(
             f"""
-            <div class="avatar-ring">{initials}</div>
+            <div class="avatar-ring" style="background:{tone};">{initials}</div>
             <div class="house-name">{house}</div>
             """,
             unsafe_allow_html=True,
