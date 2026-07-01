@@ -74,9 +74,9 @@ CATEGORIES = [
     {"icon": "⚡", "name": "Express"},
     {"icon": "🏛️", "name": "Aurus Mall"},
     {"icon": "🍷", "name": "Licores"},
-    {"icon": "🧺", "name": "La Cesta Gourmet"},
+    {"icon": "🧺", "name": "La Cesta"},
     {"icon": "✈️", "name": "Aurus Travel"},
-    {"icon": "🌿", "name": "Turbo-Fresh"},
+    {"icon": "🌿", "name": "Turbo"},
     {"icon": "🎁", "name": "Regalos"},
 ]
 
@@ -84,7 +84,7 @@ CATEGORIES = [
 # app's collapsed sidebar state).
 SIDEBAR_COLLAPSED_COUNT = 3
 
-TRENDING_TAGS = ["Mundial", "Champagne", "Alta Relojería", "Trufa Negra", "Seda", "Caviar", "Perfumería Niche"]
+TRENDING_TAGS = ["Mundial", "Snack", "Gaseosa", "Cerveza"]
 
 FEATURED_HOUSES = [
     "Maison Verlaine", "Château Bistro", "Le Bernardin Express", "Orsini Gioielli",
@@ -152,13 +152,13 @@ for key, val in defaults.items():
 
 
 def greeting() -> str:
-    """Return a time-appropriate greeting, in the voice of a concierge."""
+    """Return a time-appropriate greeting phrase, e.g. 'buenos días'."""
     hour = datetime.now().hour
     if hour < 12:
-        return "Buenos días"
+        return "buenos días"
     if hour < 19:
-        return "Buenas tardes"
-    return "Buenas noches"
+        return "buenas tardes"
+    return "buenas noches"
 
 
 # =============================================================================
@@ -441,20 +441,23 @@ with top_l:
         <div class="brand">
             <span class="hamburger">☰</span> ✦ AURUS<span> PRIME</span>
         </div>
-        <div class="location-pill" style="margin-top:8px;">📍 {st.session_state.city} ▾</div>
+        <div class="location-pill" style="margin-top:8px;">📍 Ingresar mi ubicación ▾</div>
         """,
         unsafe_allow_html=True,
     )
 
 with top_m:
     st.write("")
-    st.text_input("Buscar", placeholder="👓 Comida, restaurantes, tiendas, productos…", label_visibility="collapsed")
+    st.text_input("Buscar", placeholder="Comida, restaurantes, tiendas, productos…", label_visibility="collapsed")
 
 with top_r:
     st.write("")
     ac1, ac2 = st.columns(2)
     with ac1:
-        st.button("Ingreso", key="login_btn")
+        st.markdown(
+            f"<div class='avatar-mini' style='margin-left:auto;'>{st.session_state.user_name[0]}</div>",
+            unsafe_allow_html=True,
+        )
     with ac2:
         st.button(f"🛍 {st.session_state.cart_count}", key="cart_btn")
 
@@ -475,9 +478,7 @@ st.markdown(
 st.markdown(
     f"""
     <div class="hero">
-        <div class="eyebrow" style="justify-content:center; display:flex;">Bienvenido a un nuevo estándar</div>
-        <h1>{greeting()}.</h1>
-        <p class="sub">¿Qué desea recibir hoy, con la discreción y el cuidado que le caracterizan?</p>
+        <h1>Hola, {greeting()}.</h1>
     </div>
     """,
     unsafe_allow_html=True,
@@ -487,19 +488,19 @@ hc1, hc2, hc3 = st.columns([1, 3, 1])
 with hc2:
     st.text_input(
         "Dirección de entrega",
-        placeholder=f"📍 ¿Dónde desea recibir su pedido en {st.session_state.city}?",
+        placeholder="📍 ¿Dónde quieres recibir tu compra?",
         label_visibility="collapsed",
     )
     b1, b2, b3 = st.columns([1, 1, 1])
     with b2:
-        st.button("⊙ Usar mi ubicación actual", key="use_location")
+        st.button("📍 Usa tu ubicación actual", key="use_location")
 
 # =============================================================================
 # 9. CATEGORY ROW — "¿Necesitas algo más?" equivalent: one simple row of
 #    clickable icon buttons, kept short and practical on purpose.
 # =============================================================================
 st.markdown(
-    "<div class='section-title'><h2>¿Qué necesita hoy?</h2><div class='rule'></div></div>",
+    "<div class='section-title'><h2>¿Necesitas algo más?</h2><div class='rule'></div></div>",
     unsafe_allow_html=True,
 )
 
@@ -536,7 +537,7 @@ st.markdown(f"<div class='chip-row'>{chips_html}</div>", unsafe_allow_html=True)
 # 11. FEATURED HOUSES ("¡Los 10 más elegidos!")
 # =============================================================================
 st.markdown(
-    "<div class='section-title'><h2>¡Las 10 casas más elegidas!</h2><div class='rule'></div></div>",
+    "<div class='section-title'><h2>¡Los 10 más elegidos!</h2><div class='rule'></div></div>",
     unsafe_allow_html=True,
 )
 house_cols = st.columns(5)
