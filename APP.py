@@ -63,19 +63,20 @@ BRAND_MONOGRAM = "AP"
 
 CITIES = ["Arequipa", "Lima", "Cusco", "Trujillo", "Piura"]
 
-# Full section catalog — shown in the sidebar (with "ver más / ver menos")
-# and as the main category row on the home page.
+# Section catalog — one simple, clickable entry per line. Shown BOTH in the
+# sidebar (with "ver más / ver menos") and as the main category icon row.
+# Kept intentionally short (icon + one word) so the whole app stays easy
+# to scan and tap on any screen size.
 CATEGORIES = [
-    {"icon": "🍽️", "name": "Alta Restauración", "short": "Restaurantes", "desc": "Mesas y chefs de autor"},
-    {"icon": "🧺", "name": "Aurus Market",       "short": "Supermercados","desc": "Despensa fina en minutos"},
-    {"icon": "💊", "name": "Farmacia Prime",     "short": "Farmacia",     "desc": "Bienestar y cuidado premium"},
-    {"icon": "⚡", "name": "Aurus Express",      "short": "Express",      "desc": "Entrega inmediata, 30 min"},
-    {"icon": "🏛️", "name": "Aurus Mall",         "short": "Aurus Mall",   "desc": "Casas de lujo bajo un techo"},
-    {"icon": "🍷", "name": "La Cava",            "short": "Licores",      "desc": "Vinos y espirituosos selectos"},
-    {"icon": "✈️", "name": "Aurus Travel",       "short": "Travel",       "desc": "Experiencias y reservas VIP"},
-    {"icon": "🌿", "name": "Aurus Fresh",        "short": "Turbo-Fresh",  "desc": "Mercado exprés, 15 minutos"},
-    {"icon": "🎁", "name": "Regalos Selectos",   "short": "Regalos",      "desc": "Obsequios curados de autor"},
-    {"icon": "🛍️", "name": "Boutiques",          "short": "Boutiques",    "desc": "Moda y accesorios exclusivos"},
+    {"icon": "🍽️", "name": "Restaurantes"},
+    {"icon": "🧺", "name": "Supermercados"},
+    {"icon": "💊", "name": "Farmacia"},
+    {"icon": "⚡", "name": "Express"},
+    {"icon": "🏛️", "name": "Aurus Mall"},
+    {"icon": "🍷", "name": "Licores"},
+    {"icon": "✈️", "name": "Aurus Travel"},
+    {"icon": "🌿", "name": "Turbo-Fresh"},
+    {"icon": "🎁", "name": "Regalos"},
 ]
 
 # How many sections show before the "Ver más" toggle (mirrors the reference
@@ -118,7 +119,7 @@ JOIN_CARDS = [
 
 SIDEBAR_OTHERS = [
     ("🍽️", "Registra tu restaurante"),
-    ("🏷️", "Registra tu boutique / comercio"),
+    ("🏷️", "Registra tu tienda"),
     ("🎩", "Quiero ser Aurus Courier"),
     ("📣", "Pauta en Aurus Prime"),
 ]
@@ -138,6 +139,7 @@ defaults = {
     "city": CITIES[0],
     "cart_count": 0,
     "sidebar_expanded": False,
+    "active_category": None,
 }
 for key, val in defaults.items():
     if key not in st.session_state:
@@ -242,21 +244,18 @@ h1, h2, h3 { font-family: 'Playfair Display', serif !important; color: var(--ivo
 .section-title h2 { font-size: 1.5rem; margin:0; }
 .section-title .rule { flex:1; height:1px; background: var(--divider); }
 
-/* ---------- category icon row (mirrors "¿Necesitas algo más?") ---------- */
-.cat-card {
+/* ---------- category icon row (simple, compact, one line each) ---------- */
+.cat-icon { font-size: 1.6rem; text-align:center; margin-bottom: 2px; }
+
+.active-banner {
+    border: 1px solid var(--gold);
     background: var(--panel);
-    border: 1px solid var(--divider);
-    border-radius: 14px;
-    padding: 18px 10px;
-    text-align:center;
-    transition: all .18s ease;
-    height: 100%;
+    border-radius: 12px;
+    padding: 12px 18px;
+    color: var(--gold-light);
+    font-size: 0.9rem;
+    margin-bottom: 20px;
 }
-.cat-card:hover { border-color: var(--gold); transform: translateY(-3px); }
-.cat-card .icon { font-size: 1.7rem; margin-bottom:6px; }
-.cat-card .name { font-family:'Playfair Display', serif; font-size:0.92rem; color: var(--ivory); margin-bottom:2px; }
-.cat-card .desc { font-size: 0.72rem; color: var(--muted); }
-.cat-card .arrow { color: var(--gold-light); font-size:0.75rem; }
 
 /* ---------- monogram avatar for featured houses ---------- */
 .avatar-ring {
@@ -378,15 +377,9 @@ with st.sidebar:
 
     visible = CATEGORIES if st.session_state.sidebar_expanded else CATEGORIES[:SIDEBAR_COLLAPSED_COUNT]
     for cat in visible:
-        st.markdown(
-            f"""
-            <div class="section-row">
-                <div class="left">{cat['icon']} {cat['name']}</div>
-                <div class="chev">›</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        if st.button(f"{cat['icon']}  {cat['name']}", key=f"side_{cat['name']}", use_container_width=True):
+            st.session_state.active_category = cat["name"]
+            st.rerun()
 
     toggle_label = "Ver menos" if st.session_state.sidebar_expanded else "Ver más"
     if st.button(toggle_label, key="toggle_sections"):
@@ -482,31 +475,27 @@ with hc2:
         st.button("⊙ Usar mi ubicación actual", key="use_location")
 
 # =============================================================================
-# 9. CATEGORY ROW — "¿Necesitas algo más?" equivalent: all 10 sections
-#    as a single icon row, matching the reference app's structure.
+# 9. CATEGORY ROW — "¿Necesitas algo más?" equivalent: one simple row of
+#    clickable icon buttons, kept short and practical on purpose.
 # =============================================================================
 st.markdown(
     "<div class='section-title'><h2>¿Qué necesita hoy?</h2><div class='rule'></div></div>",
     unsafe_allow_html=True,
 )
 
-row1 = st.columns(5)
-row2 = st.columns(5)
-for i, cat in enumerate(CATEGORIES):
-    target = row1[i] if i < 5 else row2[i - 5]
-    with target:
-        st.markdown(
-            f"""
-            <div class="cat-card">
-                <div class="icon">{cat['icon']}</div>
-                <div class="name">{cat['short']}</div>
-                <div class="desc">{cat['desc']}</div>
-                <div class="arrow">→</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        st.write("")
+if st.session_state.active_category:
+    st.markdown(
+        f"<div class='active-banner'>✦ Estás viendo: <b>{st.session_state.active_category}</b> "
+        f"&nbsp;·&nbsp; próximamente disponible con catálogo completo.</div>",
+        unsafe_allow_html=True,
+    )
+
+cat_cols = st.columns(len(CATEGORIES))
+for col, cat in zip(cat_cols, CATEGORIES):
+    with col:
+        if st.button(f"{cat['icon']}  {cat['name']}", key=f"main_{cat['name']}", use_container_width=True):
+            st.session_state.active_category = cat["name"]
+            st.rerun()
 
 # =============================================================================
 # 10. TRENDING TAGS ("Lo más buscado")
