@@ -1,232 +1,473 @@
-import streamlit as st
-import math
-import numpy as np
-import pandas as pd
-from datetime import datetime
-import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle, Polygon, Circle
-import io
-import tempfile
-import os
+"""
+AURUS PRIME — Luxury On-Demand Concierge Marketplace
+=====================================================
+Streamlit single-file application.
 
-# 1. Configuración de página DEBE SER LO PRIMERO
+Author  : Generated for deployment to Streamlit Community Cloud (streamlit.io)
+Stack   : Python 3.10+ / Streamlit >= 1.33
+Purpose : Landing / home experience for a luxury delivery marketplace
+          (boutiques, gourmet, pharmacy, express couriers, wine cellar,
+          travel and curated gifting) inspired structurally by common
+          quick-commerce apps, redesigned end-to-end for a premium,
+          "old-money" luxury audience.
+
+Design tokens (see DESIGN SYSTEM section below):
+    Background : #0B0B0C (obsidian)
+    Panel      : #141416 (graphite)
+    Gold       : #C9A227 (antique gold)  /  #E8CD7A (gold light)
+    Ivory      : #F5F1E8
+    Champagne  : #EFE6D8
+    Muted text : #A8A29B
+    Divider    : rgba(201,162,39,0.25)
+
+    Display face : "Playfair Display" (serif, headlines)
+    Accent face  : "Cormorant Garamond" (serif italic, quotes/eyebrows)
+    Utility face : "Inter" (sans, UI chrome / labels / body)
+
+Run locally:
+    pip install -r requirements.txt
+    streamlit run app.py
+
+Deploy:
+    1. Push this repo to GitHub (app.py + requirements.txt + .streamlit/config.toml)
+    2. Go to https://share.streamlit.io -> "New app"
+    3. Point it at your repo / branch / app.py
+    4. Deploy. Done.
+"""
+
+import streamlit as st
+from datetime import datetime
+
+# =============================================================================
+# 1. PAGE CONFIGURATION — must be the first Streamlit call
+# =============================================================================
 st.set_page_config(
-    page_title="Rappi - AURUS PRIME",
-    page_icon="🥸",
+    page_title="Aurus Prime | Concierge de Lujo a Domicilio",
+    page_icon="✦",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
 )
 
-# 2. Definición de constantes básicas para evitar NameError
-APP_OPCIONES = [
-    "🏗️ Cálculo Básico",
-    "📊 Análisis Completo (Rankine)",
-    "📊 Análisis Completo (Coulomb)",
-    "📐 Diseño del Fuste",
-    "ℹ️ Acerca de",
-    "✉️ Contacto"
+# =============================================================================
+# 2. DATA — content model (edit here to change copy / catalog without
+#    touching layout code)
+# =============================================================================
+
+BRAND_NAME = "AURUS PRIME"
+BRAND_MONOGRAM = "AP"
+
+CITIES = ["Arequipa", "Lima", "Cusco", "Trujillo", "Piura"]
+
+CATEGORIES = [
+    {"icon": "🛍️", "name": "Boutiques",        "desc": "Moda y accesorios de autor"},
+    {"icon": "💊", "name": "Farmacia Prime",   "desc": "Bienestar y cuidado premium"},
+    {"icon": "⚡", "name": "Aurus Express",    "desc": "Entrega inmediata, 30 min"},
+    {"icon": "🏛️", "name": "Aurus Mall",       "desc": "Casas de lujo bajo un mismo techo"},
+    {"icon": "🍷", "name": "La Cava",          "desc": "Vinos y espirituosos selectos"},
+    {"icon": "🧺", "name": "La Cesta Gourmet", "desc": "Delicatessen y alta despensa"},
+    {"icon": "✈️", "name": "Aurus Travel",     "desc": "Experiencias y reservas exclusivas"},
+    {"icon": "🌿", "name": "Aurus Fresh",      "desc": "Mercado fino en 15 minutos"},
+    {"icon": "🎁", "name": "Regalos Selectos", "desc": "Obsequios curados para cada ocasión"},
 ]
 
-SIDEBAR_SECCIONES = [
-    (opt, opt) for opt in APP_OPCIONES
+TRENDING_TAGS = ["Champagne", "Alta Relojería", "Trufa Negra", "Seda", "Cuero Italiano", "Caviar", "Perfumería Niche"]
+
+FEATURED_HOUSES = [
+    "Maison Verlaine", "Château Bistro", "Le Bernardin Express", "Orsini Gioielli",
+    "Nord Atelier", "Casa Dorado", "Villa Cachemira", "L'Or Noir", "Ámbar & Cedro", "Silvana Home",
 ]
 
-# Importar sistema de pagos simple
-try:
-    from simple_payment_system import payment_system
-    PAYMENT_SYSTEM_AVAILABLE = True
-except ImportError:
-    PAYMENT_SYSTEM_AVAILABLE = False
+JOIN_CARDS = [
+    {
+        "icon": "🏷️",
+        "title": "Registra tu boutique",
+        "body": "Súmate a un círculo selecto de firmas y llega a una clientela exigente en todo el país.",
+        "cta": "Conocer más",
+    },
+    {
+        "icon": "🍽️",
+        "title": "Registra tu casa gourmet",
+        "body": "Lleva tu propuesta culinaria a la mesa de quienes buscan excelencia, sin salir de tu cocina.",
+        "cta": "Conocer más",
+    },
+    {
+        "icon": "🎩",
+        "title": "Sé Aurus Courier",
+        "body": "Entregas de alto estándar, tarifas preferentes y el respaldo de una marca premium.",
+        "cta": "Postular ahora",
+    },
+]
 
-# Importaciones opcionales con manejo de errores
-try:
-    import plotly.express as px
-    import plotly.graph_objects as go
-    PLOTLY_AVAILABLE = True
-except ImportError:
-    PLOTLY_AVAILABLE = False
+# =============================================================================
+# 3. SESSION STATE
+# =============================================================================
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+if "user_name" not in st.session_state:
+    st.session_state.user_name = "Invitado"
+if "city" not in st.session_state:
+    st.session_state.city = CITIES[0]
+if "cart_count" not in st.session_state:
+    st.session_state.cart_count = 0
 
-try:
-    from reportlab.lib.pagesizes import A4, letter
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak, Image
-    from reportlab.lib import colors
-    from reportlab.lib.styles import getSampleStyleSheet
-    from reportlab.lib.units import inch
-    REPORTLAB_AVAILABLE = True
-except ImportError:
-    REPORTLAB_AVAILABLE = False
 
-# --- COMIENZO DE FUNCIONES DE CÁLCULO (MANTENIDAS) ---
+def greeting() -> str:
+    """Return a time-appropriate greeting, in the voice of a concierge."""
+    hour = datetime.now().hour
+    if hour < 12:
+        return "Buenos días"
+    if hour < 19:
+        return "Buenas tardes"
+    return "Buenas noches"
 
-# Función para calcular empuje activo según teoría de Coulomb
-def calcular_empuje_coulomb(datos_entrada):
-    H = datos_entrada['H']
-    h1 = datos_entrada['h1']
-    t1 = datos_entrada.get('t1', 0)
-    t2 = datos_entrada['t2']
-    b2 = datos_entrada['b2']
-    phi1 = datos_entrada['phi1']
-    delta = datos_entrada['delta']
-    alpha = datos_entrada['alpha']
-    gamma1 = datos_entrada['gamma1']
-    S_c = datos_entrada['S_c']
-    if t2 != 0:
-        beta = math.degrees(math.atan((H - h1) / t2))
-    else:
-        beta = 90.0
-    beta_rad = math.radians(beta)
-    phi1_rad = math.radians(phi1)
-    delta_rad = math.radians(delta)
-    alpha_rad = math.radians(alpha)
-    num = math.sin(math.radians(beta + phi1)) ** 2
-    den = (math.sin(math.radians(beta)) ** 2) * math.sin(math.radians(beta - delta)) * (
-        1 + math.sqrt(
-            (math.sin(math.radians(phi1 + delta)) * math.sin(math.radians(phi1 - alpha))) /
-            (math.sin(math.radians(beta - delta)) * math.sin(math.radians(beta + alpha)))
+
+# =============================================================================
+# 4. DESIGN SYSTEM — fonts, colors, component CSS
+# =============================================================================
+CUSTOM_CSS = """
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Inter:wght@400;500;600&display=swap');
+
+:root{
+    --bg:            #0B0B0C;
+    --panel:         #141416;
+    --panel-raised:  #1A1A1D;
+    --gold:          #C9A227;
+    --gold-light:    #E8CD7A;
+    --ivory:         #F5F1E8;
+    --champagne:     #EFE6D8;
+    --muted:         #A8A29B;
+    --divider:       rgba(201,162,39,0.25);
+}
+
+/* ---------- global resets ---------- */
+html, body, [class*="css"]  { font-family: 'Inter', sans-serif; }
+.stApp { background-color: var(--bg); color: var(--ivory); }
+#MainMenu, footer, header[data-testid="stHeader"] { visibility: hidden; height:0; }
+.block-container { padding-top: 1.2rem; padding-bottom: 3rem; max-width: 1180px; }
+
+h1, h2, h3 { font-family: 'Playfair Display', serif !important; color: var(--ivory); letter-spacing: 0.3px; }
+
+/* ---------- eyebrow / small caps labels ---------- */
+.eyebrow {
+    font-family: 'Inter', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-size: 0.72rem;
+    color: var(--gold-light);
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+/* ---------- top bar ---------- */
+.topbar {
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 10px 4px 18px 4px; border-bottom: 1px solid var(--divider); margin-bottom: 18px;
+}
+.brand {
+    font-family: 'Playfair Display', serif; font-weight:700; font-size: 1.55rem;
+    letter-spacing: 2px; color: var(--ivory);
+}
+.brand span { color: var(--gold); }
+.brand-tag { font-family:'Cormorant Garamond', serif; font-style: italic; color: var(--muted); font-size: 0.95rem; margin-left:10px;}
+
+/* ---------- announcement ribbon ---------- */
+.ribbon {
+    background: linear-gradient(90deg, #1A1A1D 0%, #0B0B0C 100%);
+    border: 1px solid var(--divider);
+    border-radius: 999px;
+    padding: 9px 22px;
+    display:flex; align-items:center; gap:10px; justify-content:center;
+    font-size: 0.85rem; color: var(--champagne); margin-bottom: 26px;
+    letter-spacing: 0.4px;
+}
+.ribbon b { color: var(--gold-light); }
+
+/* ---------- hero ---------- */
+.hero {
+    background: radial-gradient(circle at 20% 20%, #1c1a12 0%, #0B0B0C 60%);
+    border: 1px solid var(--divider);
+    border-radius: 18px;
+    padding: 56px 48px;
+    text-align:center;
+    margin-bottom: 34px;
+}
+.hero h1 { font-size: 2.7rem; margin-bottom: 4px; }
+.hero p.sub { font-family:'Cormorant Garamond', serif; font-style: italic; font-size:1.25rem; color: var(--muted); margin-top:0; }
+
+/* ---------- section headers ---------- */
+.section-title { display:flex; align-items:baseline; gap:14px; margin: 38px 0 16px 0; }
+.section-title h2 { font-size: 1.5rem; margin:0; }
+.section-title .rule { flex:1; height:1px; background: var(--divider); }
+
+/* ---------- category / house cards ---------- */
+.card {
+    background: var(--panel);
+    border: 1px solid var(--divider);
+    border-radius: 14px;
+    padding: 20px 16px;
+    text-align:center;
+    transition: all .18s ease;
+    height: 100%;
+}
+.card:hover { border-color: var(--gold); transform: translateY(-3px); }
+.card .icon { font-size: 1.8rem; margin-bottom:8px; }
+.card .name { font-family:'Playfair Display', serif; font-size:1.02rem; color: var(--ivory); margin-bottom:4px; }
+.card .desc { font-size: 0.78rem; color: var(--muted); }
+
+/* ---------- monogram avatar for featured houses ---------- */
+.avatar-ring {
+    width:64px; height:64px; border-radius:50%;
+    border: 1px solid var(--gold);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Playfair Display', serif; color: var(--gold-light); font-size:1.1rem;
+    margin: 0 auto 10px auto; background: var(--panel-raised);
+}
+.house-name { text-align:center; font-size:0.82rem; color: var(--champagne); }
+
+/* ---------- chips ---------- */
+.chip-row { display:flex; flex-wrap:wrap; gap:10px; margin-bottom: 6px;}
+.chip {
+    border:1px solid var(--divider); color: var(--champagne); border-radius:999px;
+    padding: 7px 16px; font-size:0.82rem; background: var(--panel);
+}
+
+/* ---------- join cards ---------- */
+.join-card {
+    background: var(--panel); border:1px solid var(--divider); border-radius:16px;
+    padding: 28px 24px; height:100%;
+}
+.join-card .icon { font-size:1.9rem; margin-bottom:10px;}
+.join-card h3 { font-size:1.15rem; margin: 0 0 8px 0; }
+.join-card p { color: var(--muted); font-size:0.88rem; line-height:1.5; }
+
+/* ---------- buttons (Streamlit override) ---------- */
+div.stButton > button, div.stDownloadButton > button {
+    background: transparent;
+    color: var(--gold-light);
+    border: 1px solid var(--gold);
+    border-radius: 999px;
+    padding: 8px 22px;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    font-size: 0.72rem;
+    font-weight: 600;
+    transition: all .18s ease;
+}
+div.stButton > button:hover, div.stDownloadButton > button:hover {
+    background: var(--gold);
+    color: #0B0B0C;
+    border-color: var(--gold);
+}
+.stButton.primary div.stButton > button { background: var(--gold); color:#0B0B0C; }
+
+/* ---------- inputs ---------- */
+div[data-baseweb="select"] > div, .stTextInput > div > div {
+    background: var(--panel) !important;
+    border: 1px solid var(--divider) !important;
+    color: var(--ivory) !important;
+    border-radius: 10px !important;
+}
+
+/* ---------- sidebar ---------- */
+section[data-testid="stSidebar"] {
+    background-color: #0E0E10;
+    border-right: 1px solid var(--divider);
+}
+section[data-testid="stSidebar"] .eyebrow { margin-top: 18px; }
+section[data-testid="stSidebar"] hr { border-color: var(--divider); }
+
+/* ---------- footer ---------- */
+.footer { border-top:1px solid var(--divider); margin-top: 50px; padding-top: 24px; text-align:center; color:var(--muted); font-size:0.8rem;}
+.footer .crest { font-family:'Playfair Display', serif; color: var(--gold); font-size:1.4rem; letter-spacing:3px; margin-bottom:6px;}
+</style>
+"""
+st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+
+# =============================================================================
+# 5. SIDEBAR — replicates the app's slide-out menu (sections, promotions,
+#    profile, other actions, country selector, sign out)
+# =============================================================================
+with st.sidebar:
+    st.markdown(f"<div class='brand'>✦ <span>{BRAND_MONOGRAM}</span></div>", unsafe_allow_html=True)
+    st.markdown(
+        f"<p style='color:var(--muted); font-family:\"Cormorant Garamond\",serif; font-style:italic;'>"
+        f"Hola, {st.session_state.user_name}</p>",
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("<div class='eyebrow'>Secciones</div>", unsafe_allow_html=True)
+    for cat in CATEGORIES:
+        st.markdown(f"{cat['icon']}&nbsp;&nbsp;**{cat['name']}**", unsafe_allow_html=True)
+
+    st.markdown("---")
+    st.markdown("<div class='eyebrow'>Promociones y créditos</div>", unsafe_allow_html=True)
+    col_a, col_b = st.columns([2, 1])
+    col_a.markdown("Créditos Aurus")
+    col_b.markdown("**S/ 0.00**")
+
+    st.markdown("---")
+    st.markdown("<div class='eyebrow'>Tu perfil</div>", unsafe_allow_html=True)
+    st.markdown("Información de mi cuenta")
+    st.markdown("Métodos de pago")
+    st.markdown("Últimas órdenes")
+
+    st.markdown("---")
+    st.markdown("<div class='eyebrow'>Otros</div>", unsafe_allow_html=True)
+    st.markdown("Registra tu boutique")
+    st.markdown("Registra tu casa gourmet")
+    st.markdown("Quiero ser Aurus Courier")
+    st.markdown("Publicidad en Aurus Prime")
+
+    st.markdown("---")
+    st.selectbox("País", ["🇵🇪 Perú", "🇨🇴 Colombia", "🇲🇽 México", "🇨🇱 Chile"], key="country_select")
+
+    if st.button("Cerrar sesión", key="logout_btn"):
+        st.session_state.logged_in = False
+        st.session_state.user_name = "Invitado"
+
+# =============================================================================
+# 6. TOP BAR — logo, location, search, account, cart
+# =============================================================================
+top_l, top_r = st.columns([3, 2])
+with top_l:
+    st.markdown(
+        f"<div class='brand'>✦ AURUS<span> PRIME</span>"
+        f"<span class='brand-tag'>Concierge de lujo a domicilio</span></div>",
+        unsafe_allow_html=True,
+    )
+with top_r:
+    c1, c2, c3 = st.columns([2, 3, 1])
+    with c1:
+        st.session_state.city = st.selectbox("Ubicación", CITIES, label_visibility="collapsed")
+    with c2:
+        st.text_input("Buscar", placeholder="Boutiques, gourmet, casas, productos…", label_visibility="collapsed")
+    with c3:
+        st.button(f"🛍 {st.session_state.cart_count}", key="cart_btn")
+
+st.markdown("<hr style='border-color:var(--divider); margin-top:0;'>", unsafe_allow_html=True)
+
+# =============================================================================
+# 7. ANNOUNCEMENT RIBBON
+# =============================================================================
+st.markdown(
+    "<div class='ribbon'>✦ &nbsp;¿Nuevo en Aurus Prime? Disfruta de <b>envíos de cortesía</b> "
+    "en tus primeras semanas &nbsp;·&nbsp; <b>Regístrate</b></div>",
+    unsafe_allow_html=True,
+)
+
+# =============================================================================
+# 8. HERO
+# =============================================================================
+st.markdown(
+    f"""
+    <div class="hero">
+        <div class="eyebrow" style="justify-content:center; display:flex;">Bienvenido a un nuevo estándar</div>
+        <h1>{greeting()}.</h1>
+        <p class="sub">¿Qué desea recibir hoy, con la discreción y el cuidado que le caracterizan?</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+hc1, hc2, hc3 = st.columns([1, 3, 1])
+with hc2:
+    st.text_input(
+        "Dirección de entrega",
+        placeholder=f"¿Dónde desea recibir su pedido en {st.session_state.city}?",
+        label_visibility="collapsed",
+    )
+    b1, b2, b3 = st.columns([1, 1, 1])
+    with b2:
+        st.button("Usar mi ubicación actual", key="use_location")
+
+# =============================================================================
+# 9. CATEGORY GRID
+# =============================================================================
+st.markdown(
+    "<div class='section-title'><h2>¿Qué necesita hoy?</h2><div class='rule'></div></div>",
+    unsafe_allow_html=True,
+)
+
+cols = st.columns(3)
+for i, cat in enumerate(CATEGORIES):
+    with cols[i % 3]:
+        st.markdown(
+            f"""
+            <div class="card">
+                <div class="icon">{cat['icon']}</div>
+                <div class="name">{cat['name']}</div>
+                <div class="desc">{cat['desc']}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
-    ) ** 2
-    Ka = num / den
-    H_efectiva = H + (t1 + t2) * math.tan(alpha_rad)
-    Pa = 0.5 * Ka * gamma1 * (H_efectiva) ** 2
-    Ph = Pa * math.cos(math.radians(90) - beta_rad + delta_rad)
-    Pv = Pa * math.sin(math.radians(90) - beta_rad + delta_rad)
-    PSC = Ka * H * (S_c / 1000) * (math.sin(beta_rad) / math.sin(beta_rad + alpha_rad))
-    P_total_horizontal = Ph + PSC
-    return {
-        'beta': beta, 'Ka': Ka, 'H_efectiva': H_efectiva, 'Pa': Pa,
-        'Ph': Ph, 'Pv': Pv, 'PSC': PSC, 'P_total_horizontal': P_total_horizontal
-    }
+        st.write("")  # vertical spacing between rows
 
-def calcular_diseno_fuste(resultados, datos_entrada):
-    h1 = datos_entrada['h1']
-    gamma_relleno = datos_entrada['gamma_relleno']
-    phi_relleno = datos_entrada['phi_relleno']
-    cohesion = datos_entrada['cohesion']
-    Df = datos_entrada['Df']
-    fc = datos_entrada['fc']
-    fy = datos_entrada['fy']
-    b = resultados['b']
-    phi_rad = math.radians(phi_relleno)
-    kp = (1 + math.sin(phi_rad)) / (1 - math.sin(phi_rad))
-    Ep = 0.5 * kp * (gamma_relleno/1000) * Df**2 + 2 * cohesion * Df * math.sqrt(kp)
-    Ep_kg_m = Ep * 1000
-    yt = Df / 3
-    ka = resultados['ka']
-    Ea_relleno = 0.5 * ka * (gamma_relleno/1000) * h1**2
-    Ea_sobrecarga = ka * (datos_entrada['qsc']/1000) * h1
-    Ea_total = Ea_relleno + Ea_sobrecarga
-    Mvol_relleno = Ea_relleno * h1 / 3
-    Mvol_sobrecarga = Ea_sobrecarga * h1 / 2
-    Mvol_total = Mvol_relleno + Mvol_sobrecarga
-    W_muro = b * h1 * (datos_entrada['gamma_concreto']/1000)
-    W_zapata = resultados['Bz'] * resultados['hz'] * (datos_entrada['gamma_concreto']/1000)
-    W_relleno = resultados['t'] * h1 * (gamma_relleno/1000)
-    x_muro = resultados['r'] + b/2
-    x_zapata = resultados['Bz']/2
-    x_relleno = resultados['r'] + b + resultados['t']/2
-    Mr_muro = W_muro * x_muro
-    Mr_zapata = W_zapata * x_zapata
-    Mr_relleno = W_relleno * x_relleno
-    Mr_pasivo = Ep * yt
-    Mesta_total = Mr_muro + Mr_zapata + Mr_relleno + Mr_pasivo
-    FSv = Mesta_total / Mvol_total
-    FSd = (math.tan(phi_rad) * (W_muro + W_zapata + W_relleno) + Ep) / Ea_total
-    W_total = W_muro + W_zapata + W_relleno
-    sum_momentos = Mr_muro + Mr_zapata + Mr_relleno
-    x_barra = sum_momentos / W_total
-    e = abs(x_barra - resultados['Bz']/2)
-    Mu = 1.4 * Mvol_total
-    fc_kg_cm2 = fc
-    fy_kg_cm2 = fy
-    dreq = math.sqrt(Mu * 100000 / (0.9 * 0.85 * fc_kg_cm2 * b * 100 * 0.59))
-    hreq = dreq + 9
-    dreal = resultados['hz'] * 100 - 9
-    As = Mu * 100000 / (0.9 * fy_kg_cm2 * dreal)
-    Asmin = 0.0033 * b * 100 * dreal
-    area_barra = 1.98
-    num_barras = math.ceil(As / area_barra)
-    As_proporcionado = num_barras * area_barra
-    separacion = (b * 100 - 6) / (num_barras - 1) if num_barras > 1 else 0
-    rho_real = As_proporcionado / (b * 100 * dreal)
-    rho_min = 0.0033
-    rho_max = 0.0163
-    As_retraccion = 0.002 * b * 100 * resultados['hz'] * 100
-    num_barras_retraccion = math.ceil(As_retraccion / 1.27)
-    As_retraccion_proporcionado = num_barras_retraccion * 1.27
-    return {
-        'kp': kp, 'Ep_kg_m': Ep_kg_m, 'yt': yt, 'Mvol_total': Mvol_total,
-        'Mesta_total': Mesta_total, 'FSv': FSv, 'FSd': FSd, 'x_barra': x_barra,
-        'e': e, 'dreq': dreq, 'hreq': hreq, 'dreal': dreal, 'As': As,
-        'Asmin': Asmin, 'num_barras': num_barras, 'As_proporcionado': As_proporcionado,
-        'separacion': separacion, 'rho_real': rho_real, 'As_retraccion': As_retraccion,
-        'num_barras_retraccion': num_barras_retraccion, 'As_retraccion_proporcionado': As_retraccion_proporcionado
-    }
+# =============================================================================
+# 10. TRENDING TAGS
+# =============================================================================
+st.markdown(
+    "<div class='section-title'><h2>Lo más solicitado</h2><div class='rule'></div></div>",
+    unsafe_allow_html=True,
+)
+chips_html = "".join(f"<span class='chip'>{tag}</span>" for tag in TRENDING_TAGS)
+st.markdown(f"<div class='chip-row'>{chips_html}</div>", unsafe_allow_html=True)
 
-# --- FUNCIONES DE UI SIMPLIFICADAS ---
+# =============================================================================
+# 11. FEATURED HOUSES
+# =============================================================================
+st.markdown(
+    "<div class='section-title'><h2>Las 10 casas más elegidas</h2><div class='rule'></div></div>",
+    unsafe_allow_html=True,
+)
+house_cols = st.columns(5)
+for i, house in enumerate(FEATURED_HOUSES):
+    initials = "".join([w[0] for w in house.split()[:2]]).upper()
+    with house_cols[i % 5]:
+        st.markdown(
+            f"""
+            <div class="avatar-ring">{initials}</div>
+            <div class="house-name">{house}</div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.write("")
 
-def inject_aurus_theme():
-    st.markdown("""
-    <style>
-    .main { background-color: #f5f5f5; }
-    .stButton>button { width: 100%; border-radius: 5px; height: 3em; background-color: #FF5722; color: white; }
-    </style>
-    """, unsafe_allow_html=True)
+# =============================================================================
+# 12. JOIN AURUS PRIME (partners / couriers)
+# =============================================================================
+st.markdown(
+    "<div class='section-title'><h2>Únase a Aurus Prime</h2><div class='rule'></div></div>",
+    unsafe_allow_html=True,
+)
+join_cols = st.columns(3)
+for i, card in enumerate(JOIN_CARDS):
+    with join_cols[i]:
+        st.markdown(
+            f"""
+            <div class="join-card">
+                <div class="icon">{card['icon']}</div>
+                <h3>{card['title']}</h3>
+                <p>{card['body']}</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.write("")
+        st.button(card["cta"], key=f"join_{i}")
 
-def show_auth_page():
-    inject_aurus_theme()
-    st.title("🏗️ AURUS PRIME - Muros de Contención")
-    st.markdown("### Bienvenido al sistema de diseño estructural")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("🚀 Iniciar Modo Demo (Gratis)"):
-            st.session_state['logged_in'] = True
-            st.session_state['user_data'] = {"username": "demo", "plan": "gratuito", "name": "Usuario Demo"}
-            st.session_state['user'] = "demo"
-            st.session_state['plan'] = "gratuito"
-            st.rerun()
-    with col2:
-        if st.button("👨‍💼 Iniciar como Administrador"):
-            st.session_state['logged_in'] = True
-            st.session_state['user_data'] = {"username": "admin", "plan": "premium", "name": "Administrador"}
-            st.session_state['user'] = "admin"
-            st.session_state['plan'] = "premium"
-            st.rerun()
-
-# --- FLUJO PRINCIPAL ---
-
-if 'logged_in' not in st.session_state:
-    st.session_state['logged_in'] = False
-
-if not st.session_state['logged_in']:
-    show_auth_page()
-else:
-    st.sidebar.title("Navegación")
-    opcion = st.sidebar.selectbox("Seleccione una opción", APP_OPCIONES)
-    
-    if st.sidebar.button("Cerrar Sesión"):
-        st.session_state['logged_in'] = False
-        st.rerun()
-
-    if opcion == "🏗️ Cálculo Básico":
-        st.title("🏗️ Cálculo Básico de Muro")
-        altura = st.number_input("Altura (m)", value=3.0)
-        base = st.number_input("Base (m)", value=1.5)
-        if st.button("Calcular"):
-            st.success(f"Cálculo realizado para muro de {altura}m")
-    
-    elif opcion == "📊 Análisis Completo (Rankine)":
-        st.title("📊 Análisis de Rankine")
-        st.info("Disponible en versión Premium")
-        
-    elif opcion == "📊 Análisis Completo (Coulomb)":
-        st.title("📊 Análisis de Coulomb")
-        st.info("Disponible en versión Premium")
-        
-    elif opcion == "📐 Diseño del Fuste":
-        st.title("📐 Diseño del Fuste")
-        st.info("Disponible en versión Premium")
-        
-    else:
-        st.title(opcion)
-        st.write("Sección en desarrollo.")
+# =============================================================================
+# 13. FOOTER
+# =============================================================================
+st.markdown(
+    f"""
+    <div class="footer">
+        <div class="crest">✦ {BRAND_MONOGRAM} ✦</div>
+        <div>AURUS PRIME · Concierge de lujo a domicilio</div>
+        <div style="margin-top:6px;">Términos y condiciones · Privacidad · Ayuda · © {datetime.now().year} Aurus Prime</div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
