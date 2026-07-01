@@ -6,10 +6,14 @@ Streamlit single-file application.
 Author  : Generated for deployment to Streamlit Community Cloud (streamlit.io)
 Stack   : Python 3.10+ / Streamlit >= 1.33
 Purpose : Landing / home experience for a luxury delivery marketplace
-          (boutiques, gourmet, pharmacy, express couriers, wine cellar,
-          travel and curated gifting) inspired structurally by common
-          quick-commerce apps, redesigned end-to-end for a premium,
-          "old-money" luxury audience.
+          (restaurants, market, pharmacy, express couriers, wine cellar,
+          travel, boutiques and curated gifting). Information architecture
+          mirrors a familiar quick-commerce app (top bar with hamburger
+          menu + location pill + search, a slide-out sections menu, a
+          category icon row, trending tags, a "most chosen" brand strip,
+          and partner/courier acquisition cards) — every visual element,
+          copy line and asset is original and rebuilt end-to-end in a
+          black-and-gold luxury design language for the Aurus Prime brand.
 
 Design tokens (see DESIGN SYSTEM section below):
     Background : #0B0B0C (obsidian)
@@ -50,7 +54,8 @@ st.set_page_config(
 
 # =============================================================================
 # 2. DATA — content model (edit here to change copy / catalog without
-#    touching layout code)
+#    touching layout code). Order mirrors a standard quick-commerce app's
+#    section list, renamed and re-imagined for a luxury clientele.
 # =============================================================================
 
 BRAND_NAME = "AURUS PRIME"
@@ -58,57 +63,85 @@ BRAND_MONOGRAM = "AP"
 
 CITIES = ["Arequipa", "Lima", "Cusco", "Trujillo", "Piura"]
 
+# Full section catalog — shown in the sidebar (with "ver más / ver menos")
+# and as the main category row on the home page.
 CATEGORIES = [
-    {"icon": "🛍️", "name": "Boutiques",        "desc": "Moda y accesorios de autor"},
-    {"icon": "💊", "name": "Farmacia Prime",   "desc": "Bienestar y cuidado premium"},
-    {"icon": "⚡", "name": "Aurus Express",    "desc": "Entrega inmediata, 30 min"},
-    {"icon": "🏛️", "name": "Aurus Mall",       "desc": "Casas de lujo bajo un mismo techo"},
-    {"icon": "🍷", "name": "La Cava",          "desc": "Vinos y espirituosos selectos"},
-    {"icon": "🧺", "name": "La Cesta Gourmet", "desc": "Delicatessen y alta despensa"},
-    {"icon": "✈️", "name": "Aurus Travel",     "desc": "Experiencias y reservas exclusivas"},
-    {"icon": "🌿", "name": "Aurus Fresh",      "desc": "Mercado fino en 15 minutos"},
-    {"icon": "🎁", "name": "Regalos Selectos", "desc": "Obsequios curados para cada ocasión"},
+    {"icon": "🍽️", "name": "Alta Restauración", "short": "Restaurantes", "desc": "Mesas y chefs de autor"},
+    {"icon": "🧺", "name": "Aurus Market",       "short": "Supermercados","desc": "Despensa fina en minutos"},
+    {"icon": "💊", "name": "Farmacia Prime",     "short": "Farmacia",     "desc": "Bienestar y cuidado premium"},
+    {"icon": "⚡", "name": "Aurus Express",      "short": "Express",      "desc": "Entrega inmediata, 30 min"},
+    {"icon": "🏛️", "name": "Aurus Mall",         "short": "Aurus Mall",   "desc": "Casas de lujo bajo un techo"},
+    {"icon": "🍷", "name": "La Cava",            "short": "Licores",      "desc": "Vinos y espirituosos selectos"},
+    {"icon": "✈️", "name": "Aurus Travel",       "short": "Travel",       "desc": "Experiencias y reservas VIP"},
+    {"icon": "🌿", "name": "Aurus Fresh",        "short": "Turbo-Fresh",  "desc": "Mercado exprés, 15 minutos"},
+    {"icon": "🎁", "name": "Regalos Selectos",   "short": "Regalos",      "desc": "Obsequios curados de autor"},
+    {"icon": "🛍️", "name": "Boutiques",          "short": "Boutiques",    "desc": "Moda y accesorios exclusivos"},
 ]
 
-TRENDING_TAGS = ["Champagne", "Alta Relojería", "Trufa Negra", "Seda", "Cuero Italiano", "Caviar", "Perfumería Niche"]
+# How many sections show before the "Ver más" toggle (mirrors the reference
+# app's collapsed sidebar state).
+SIDEBAR_COLLAPSED_COUNT = 3
+
+TRENDING_TAGS = ["Mundial", "Champagne", "Alta Relojería", "Trufa Negra", "Seda", "Caviar", "Perfumería Niche"]
 
 FEATURED_HOUSES = [
     "Maison Verlaine", "Château Bistro", "Le Bernardin Express", "Orsini Gioielli",
     "Nord Atelier", "Casa Dorado", "Villa Cachemira", "L'Or Noir", "Ámbar & Cedro", "Silvana Home",
 ]
 
+# Partner / courier acquisition cards — mirrors the reference app's
+# "Registra tu restaurante / Registra tu comercio / Únete como repartidor"
+# module, with a photo-style gradient header instead of a stock photo.
 JOIN_CARDS = [
     {
+        "gradient": "linear-gradient(135deg,#3a2f16,#0B0B0C)",
+        "icon": "🍽️",
+        "title": "Registra tu restaurante",
+        "body": "Súmate a las casas gastronómicas de mayor prestigio y llega a una clientela exigente en todo el país.",
+        "cta": "Conocer más",
+    },
+    {
+        "gradient": "linear-gradient(135deg,#241c33,#0B0B0C)",
         "icon": "🏷️",
         "title": "Registra tu boutique",
-        "body": "Súmate a un círculo selecto de firmas y llega a una clientela exigente en todo el país.",
+        "body": "Accede a miles de clientes Aurus Prime y disfruta de una logística inmediata sin salir de tu tienda.",
         "cta": "Conocer más",
     },
     {
-        "icon": "🍽️",
-        "title": "Registra tu casa gourmet",
-        "body": "Lleva tu propuesta culinaria a la mesa de quienes buscan excelencia, sin salir de tu cocina.",
-        "cta": "Conocer más",
-    },
-    {
+        "gradient": "linear-gradient(135deg,#2a2417,#0B0B0C)",
         "icon": "🎩",
-        "title": "Sé Aurus Courier",
+        "title": "¡Únete como Aurus Courier!",
         "body": "Entregas de alto estándar, tarifas preferentes y el respaldo de una marca premium.",
-        "cta": "Postular ahora",
+        "cta": "¡Regístrate ahora!",
     },
+]
+
+SIDEBAR_OTHERS = [
+    ("🍽️", "Registra tu restaurante"),
+    ("🏷️", "Registra tu boutique / comercio"),
+    ("🎩", "Quiero ser Aurus Courier"),
+    ("📣", "Pauta en Aurus Prime"),
+]
+
+SIDEBAR_PROFILE = [
+    ("👤", "Información de mi cuenta"),
+    ("💳", "Métodos de pago"),
+    ("🧾", "Últimas órdenes"),
 ]
 
 # =============================================================================
 # 3. SESSION STATE
 # =============================================================================
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-if "user_name" not in st.session_state:
-    st.session_state.user_name = "Invitado"
-if "city" not in st.session_state:
-    st.session_state.city = CITIES[0]
-if "cart_count" not in st.session_state:
-    st.session_state.cart_count = 0
+defaults = {
+    "logged_in": False,
+    "user_name": "GRUPO",
+    "city": CITIES[0],
+    "cart_count": 0,
+    "sidebar_expanded": False,
+}
+for key, val in defaults.items():
+    if key not in st.session_state:
+        st.session_state[key] = val
 
 
 def greeting() -> str:
@@ -160,16 +193,25 @@ h1, h2, h3 { font-family: 'Playfair Display', serif !important; color: var(--ivo
 }
 
 /* ---------- top bar ---------- */
-.topbar {
-    display:flex; align-items:center; justify-content:space-between;
-    padding: 10px 4px 18px 4px; border-bottom: 1px solid var(--divider); margin-bottom: 18px;
-}
+.topbar-wrap { border-bottom: 1px solid var(--divider); margin-bottom: 18px; padding-bottom: 12px; }
 .brand {
     font-family: 'Playfair Display', serif; font-weight:700; font-size: 1.55rem;
-    letter-spacing: 2px; color: var(--ivory);
+    letter-spacing: 2px; color: var(--ivory); display:flex; align-items:center; gap:10px;
 }
 .brand span { color: var(--gold); }
-.brand-tag { font-family:'Cormorant Garamond', serif; font-style: italic; color: var(--muted); font-size: 0.95rem; margin-left:10px;}
+.brand-tag { font-family:'Cormorant Garamond', serif; font-style: italic; color: var(--muted); font-size: 0.92rem; margin-left:6px;}
+.location-pill {
+    display:inline-flex; align-items:center; gap:6px; border:1px solid var(--divider);
+    border-radius:999px; padding:7px 16px; color: var(--gold-light); font-size:0.82rem;
+    background: var(--panel);
+}
+.hamburger { font-size:1.3rem; color: var(--gold-light); line-height:1; }
+.account-pill { display:flex; align-items:center; gap:8px; color:var(--champagne); font-size:0.85rem; justify-content:flex-end; }
+.avatar-mini {
+    width:30px; height:30px; border-radius:50%; border:1px solid var(--gold);
+    display:flex; align-items:center; justify-content:center; font-size:0.75rem;
+    color: var(--gold-light); background: var(--panel-raised); font-family:'Playfair Display', serif;
+}
 
 /* ---------- announcement ribbon ---------- */
 .ribbon {
@@ -200,20 +242,21 @@ h1, h2, h3 { font-family: 'Playfair Display', serif !important; color: var(--ivo
 .section-title h2 { font-size: 1.5rem; margin:0; }
 .section-title .rule { flex:1; height:1px; background: var(--divider); }
 
-/* ---------- category / house cards ---------- */
-.card {
+/* ---------- category icon row (mirrors "¿Necesitas algo más?") ---------- */
+.cat-card {
     background: var(--panel);
     border: 1px solid var(--divider);
     border-radius: 14px;
-    padding: 20px 16px;
+    padding: 18px 10px;
     text-align:center;
     transition: all .18s ease;
     height: 100%;
 }
-.card:hover { border-color: var(--gold); transform: translateY(-3px); }
-.card .icon { font-size: 1.8rem; margin-bottom:8px; }
-.card .name { font-family:'Playfair Display', serif; font-size:1.02rem; color: var(--ivory); margin-bottom:4px; }
-.card .desc { font-size: 0.78rem; color: var(--muted); }
+.cat-card:hover { border-color: var(--gold); transform: translateY(-3px); }
+.cat-card .icon { font-size: 1.7rem; margin-bottom:6px; }
+.cat-card .name { font-family:'Playfair Display', serif; font-size:0.92rem; color: var(--ivory); margin-bottom:2px; }
+.cat-card .desc { font-size: 0.72rem; color: var(--muted); }
+.cat-card .arrow { color: var(--gold-light); font-size:0.75rem; }
 
 /* ---------- monogram avatar for featured houses ---------- */
 .avatar-ring {
@@ -231,15 +274,20 @@ h1, h2, h3 { font-family: 'Playfair Display', serif !important; color: var(--ivo
     border:1px solid var(--divider); color: var(--champagne); border-radius:999px;
     padding: 7px 16px; font-size:0.82rem; background: var(--panel);
 }
+.chip.active { background: var(--gold); color:#0B0B0C; border-color: var(--gold); font-weight:600; }
 
-/* ---------- join cards ---------- */
+/* ---------- join cards (photo-style header + body, like the reference app) ---------- */
 .join-card {
     background: var(--panel); border:1px solid var(--divider); border-radius:16px;
-    padding: 28px 24px; height:100%;
+    overflow:hidden; height:100%;
 }
-.join-card .icon { font-size:1.9rem; margin-bottom:10px;}
-.join-card h3 { font-size:1.15rem; margin: 0 0 8px 0; }
-.join-card p { color: var(--muted); font-size:0.88rem; line-height:1.5; }
+.join-photo {
+    height: 110px; display:flex; align-items:center; justify-content:center;
+    font-size: 2.4rem; border-bottom: 1px solid var(--divider);
+}
+.join-body { padding: 20px 22px 24px 22px; }
+.join-body h3 { font-size:1.08rem; margin: 0 0 8px 0; }
+.join-body p { color: var(--muted); font-size:0.86rem; line-height:1.5; min-height: 64px; }
 
 /* ---------- buttons (Streamlit override) ---------- */
 div.stButton > button, div.stDownloadButton > button {
@@ -254,13 +302,13 @@ div.stButton > button, div.stDownloadButton > button {
     font-size: 0.72rem;
     font-weight: 600;
     transition: all .18s ease;
+    width: 100%;
 }
 div.stButton > button:hover, div.stDownloadButton > button:hover {
     background: var(--gold);
     color: #0B0B0C;
     border-color: var(--gold);
 }
-.stButton.primary div.stButton > button { background: var(--gold); color:#0B0B0C; }
 
 /* ---------- inputs ---------- */
 div[data-baseweb="select"] > div, .stTextInput > div > div {
@@ -276,7 +324,25 @@ section[data-testid="stSidebar"] {
     border-right: 1px solid var(--divider);
 }
 section[data-testid="stSidebar"] .eyebrow { margin-top: 18px; }
-section[data-testid="stSidebar"] hr { border-color: var(--divider); }
+section[data-testid="stSidebar"] hr { border-color: var(--divider); margin: 14px 0; }
+.promo-banner {
+    background: linear-gradient(120deg, #241f34, #14121c);
+    border: 1px solid var(--divider);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display:flex; align-items:center; gap:10px;
+    color: var(--gold-light); font-size: 0.85rem; font-weight:600;
+    margin: 14px 0 6px 0;
+}
+.sidebar-avatar { display:flex; align-items:center; gap:10px; margin-bottom:2px; }
+.sidebar-avatar .ring {
+    width:40px; height:40px; border-radius:50%; border:1px solid var(--gold);
+    display:flex; align-items:center; justify-content:center; background: var(--panel-raised);
+    font-family:'Playfair Display', serif; color: var(--gold-light);
+}
+.section-row { display:flex; align-items:center; justify-content:space-between; padding: 7px 0; }
+.section-row .left { display:flex; align-items:center; gap:10px; color: var(--ivory); font-size:0.92rem; }
+.section-row .chev { color: var(--muted); }
 
 /* ---------- footer ---------- */
 .footer { border-top:1px solid var(--divider); margin-top: 50px; padding-top: 24px; text-align:center; color:var(--muted); font-size:0.8rem;}
@@ -286,20 +352,46 @@ section[data-testid="stSidebar"] hr { border-color: var(--divider); }
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
 # =============================================================================
-# 5. SIDEBAR — replicates the app's slide-out menu (sections, promotions,
-#    profile, other actions, country selector, sign out)
+# 5. SIDEBAR — replicates the app's slide-out menu: profile header,
+#    promotions banner, section list (with "ver más / ver menos"),
+#    credits, profile links, other actions, country selector, sign out.
 # =============================================================================
 with st.sidebar:
-    st.markdown(f"<div class='brand'>✦ <span>{BRAND_MONOGRAM}</span></div>", unsafe_allow_html=True)
     st.markdown(
-        f"<p style='color:var(--muted); font-family:\"Cormorant Garamond\",serif; font-style:italic;'>"
-        f"Hola, {st.session_state.user_name}</p>",
+        f"""
+        <div class="sidebar-avatar">
+            <div class="ring">{st.session_state.user_name[0]}</div>
+            <div>Hola, <b>{st.session_state.user_name}</b><br>
+                 <span style="color:var(--gold-light); font-size:0.75rem;">★ Miembro Prime</span>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        "<div class='promo-banner'>🎯 &nbsp;Descubre nuestras promociones exclusivas</div>",
         unsafe_allow_html=True,
     )
 
     st.markdown("<div class='eyebrow'>Secciones</div>", unsafe_allow_html=True)
-    for cat in CATEGORIES:
-        st.markdown(f"{cat['icon']}&nbsp;&nbsp;**{cat['name']}**", unsafe_allow_html=True)
+
+    visible = CATEGORIES if st.session_state.sidebar_expanded else CATEGORIES[:SIDEBAR_COLLAPSED_COUNT]
+    for cat in visible:
+        st.markdown(
+            f"""
+            <div class="section-row">
+                <div class="left">{cat['icon']} {cat['name']}</div>
+                <div class="chev">›</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    toggle_label = "Ver menos" if st.session_state.sidebar_expanded else "Ver más"
+    if st.button(toggle_label, key="toggle_sections"):
+        st.session_state.sidebar_expanded = not st.session_state.sidebar_expanded
+        st.rerun()
 
     st.markdown("---")
     st.markdown("<div class='eyebrow'>Promociones y créditos</div>", unsafe_allow_html=True)
@@ -309,16 +401,13 @@ with st.sidebar:
 
     st.markdown("---")
     st.markdown("<div class='eyebrow'>Tu perfil</div>", unsafe_allow_html=True)
-    st.markdown("Información de mi cuenta")
-    st.markdown("Métodos de pago")
-    st.markdown("Últimas órdenes")
+    for icon, label in SIDEBAR_PROFILE:
+        st.markdown(f"{icon}&nbsp;&nbsp;{label}", unsafe_allow_html=True)
 
     st.markdown("---")
     st.markdown("<div class='eyebrow'>Otros</div>", unsafe_allow_html=True)
-    st.markdown("Registra tu boutique")
-    st.markdown("Registra tu casa gourmet")
-    st.markdown("Quiero ser Aurus Courier")
-    st.markdown("Publicidad en Aurus Prime")
+    for icon, label in SIDEBAR_OTHERS:
+        st.markdown(f"{icon}&nbsp;&nbsp;{label}", unsafe_allow_html=True)
 
     st.markdown("---")
     st.selectbox("País", ["🇵🇪 Perú", "🇨🇴 Colombia", "🇲🇽 México", "🇨🇱 Chile"], key="country_select")
@@ -328,25 +417,35 @@ with st.sidebar:
         st.session_state.user_name = "Invitado"
 
 # =============================================================================
-# 6. TOP BAR — logo, location, search, account, cart
+# 6. TOP BAR — hamburger cue, logo, location pill, search, account, cart
 # =============================================================================
-top_l, top_r = st.columns([3, 2])
+st.markdown("<div class='topbar-wrap'>", unsafe_allow_html=True)
+top_l, top_m, top_r = st.columns([2.3, 3, 1.7])
+
 with top_l:
     st.markdown(
-        f"<div class='brand'>✦ AURUS<span> PRIME</span>"
-        f"<span class='brand-tag'>Concierge de lujo a domicilio</span></div>",
+        f"""
+        <div class="brand">
+            <span class="hamburger">☰</span> ✦ AURUS<span> PRIME</span>
+        </div>
+        <div class="location-pill" style="margin-top:8px;">📍 {st.session_state.city} ▾</div>
+        """,
         unsafe_allow_html=True,
     )
+
+with top_m:
+    st.write("")
+    st.text_input("Buscar", placeholder="👓 Comida, restaurantes, tiendas, productos…", label_visibility="collapsed")
+
 with top_r:
-    c1, c2, c3 = st.columns([2, 3, 1])
-    with c1:
-        st.session_state.city = st.selectbox("Ubicación", CITIES, label_visibility="collapsed")
-    with c2:
-        st.text_input("Buscar", placeholder="Boutiques, gourmet, casas, productos…", label_visibility="collapsed")
-    with c3:
+    st.write("")
+    ac1, ac2 = st.columns(2)
+    with ac1:
+        st.button("Ingreso", key="login_btn")
+    with ac2:
         st.button(f"🛍 {st.session_state.cart_count}", key="cart_btn")
 
-st.markdown("<hr style='border-color:var(--divider); margin-top:0;'>", unsafe_allow_html=True)
+st.markdown("</div>", unsafe_allow_html=True)
 
 # =============================================================================
 # 7. ANNOUNCEMENT RIBBON
@@ -375,51 +474,58 @@ hc1, hc2, hc3 = st.columns([1, 3, 1])
 with hc2:
     st.text_input(
         "Dirección de entrega",
-        placeholder=f"¿Dónde desea recibir su pedido en {st.session_state.city}?",
+        placeholder=f"📍 ¿Dónde desea recibir su pedido en {st.session_state.city}?",
         label_visibility="collapsed",
     )
     b1, b2, b3 = st.columns([1, 1, 1])
     with b2:
-        st.button("Usar mi ubicación actual", key="use_location")
+        st.button("⊙ Usar mi ubicación actual", key="use_location")
 
 # =============================================================================
-# 9. CATEGORY GRID
+# 9. CATEGORY ROW — "¿Necesitas algo más?" equivalent: all 10 sections
+#    as a single icon row, matching the reference app's structure.
 # =============================================================================
 st.markdown(
     "<div class='section-title'><h2>¿Qué necesita hoy?</h2><div class='rule'></div></div>",
     unsafe_allow_html=True,
 )
 
-cols = st.columns(3)
+row1 = st.columns(5)
+row2 = st.columns(5)
 for i, cat in enumerate(CATEGORIES):
-    with cols[i % 3]:
+    target = row1[i] if i < 5 else row2[i - 5]
+    with target:
         st.markdown(
             f"""
-            <div class="card">
+            <div class="cat-card">
                 <div class="icon">{cat['icon']}</div>
-                <div class="name">{cat['name']}</div>
+                <div class="name">{cat['short']}</div>
                 <div class="desc">{cat['desc']}</div>
+                <div class="arrow">→</div>
             </div>
             """,
             unsafe_allow_html=True,
         )
-        st.write("")  # vertical spacing between rows
+        st.write("")
 
 # =============================================================================
-# 10. TRENDING TAGS
+# 10. TRENDING TAGS ("Lo más buscado")
 # =============================================================================
 st.markdown(
-    "<div class='section-title'><h2>Lo más solicitado</h2><div class='rule'></div></div>",
+    "<div class='section-title'><h2>Lo más buscado</h2><div class='rule'></div></div>",
     unsafe_allow_html=True,
 )
-chips_html = "".join(f"<span class='chip'>{tag}</span>" for tag in TRENDING_TAGS)
+chips_html = "".join(
+    f"<span class='chip{' active' if i == 0 else ''}'>{tag}</span>"
+    for i, tag in enumerate(TRENDING_TAGS)
+)
 st.markdown(f"<div class='chip-row'>{chips_html}</div>", unsafe_allow_html=True)
 
 # =============================================================================
-# 11. FEATURED HOUSES
+# 11. FEATURED HOUSES ("¡Los 10 más elegidos!")
 # =============================================================================
 st.markdown(
-    "<div class='section-title'><h2>Las 10 casas más elegidas</h2><div class='rule'></div></div>",
+    "<div class='section-title'><h2>¡Las 10 casas más elegidas!</h2><div class='rule'></div></div>",
     unsafe_allow_html=True,
 )
 house_cols = st.columns(5)
@@ -436,10 +542,11 @@ for i, house in enumerate(FEATURED_HOUSES):
         st.write("")
 
 # =============================================================================
-# 12. JOIN AURUS PRIME (partners / couriers)
+# 12. JOIN AURUS PRIME (partners / couriers) — mirrors "Únete a Rappi"
 # =============================================================================
 st.markdown(
-    "<div class='section-title'><h2>Únase a Aurus Prime</h2><div class='rule'></div></div>",
+    "<div class='section-title'><h2>Únase a <span style=\"color:var(--gold);\">Aurus Prime</span></h2>"
+    "<div class='rule'></div></div>",
     unsafe_allow_html=True,
 )
 join_cols = st.columns(3)
@@ -448,9 +555,11 @@ for i, card in enumerate(JOIN_CARDS):
         st.markdown(
             f"""
             <div class="join-card">
-                <div class="icon">{card['icon']}</div>
-                <h3>{card['title']}</h3>
-                <p>{card['body']}</p>
+                <div class="join-photo" style="background:{card['gradient']};">{card['icon']}</div>
+                <div class="join-body">
+                    <h3>{card['title']}</h3>
+                    <p>{card['body']}</p>
+                </div>
             </div>
             """,
             unsafe_allow_html=True,
