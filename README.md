@@ -48,14 +48,32 @@ git push -u origin main
 
 Cualquier `git push` posterior a `main` actualiza la app automáticamente.
 
-## Personalización rápida
+## Arquitectura (v3 — navegación funcional)
 
-Todo el contenido (categorías, marcas destacadas, textos de las tarjetas de
-adhesión, ciudades disponibles) vive en la sección **`# 2. DATA`** al inicio
-de `app.py`, separada del código de layout — puedes editar el catálogo sin
-tocar el diseño.
+La app ya no es solo una landing decorativa: implementa un **router por
+`st.session_state.page`** con pantallas reales y un carrito funcional:
 
-Los tokens de color y tipografía están centralizados en el bloque
-`CUSTOM_CSS` (sección **`# 4. DESIGN SYSTEM`**) mediante variables CSS
-(`--bg`, `--gold`, `--ivory`, etc.), por lo que puedes ajustar la paleta
-completa cambiando unos pocos valores hexadecimales.
+```
+Home ──▶ Categoría ──▶ Tienda ──▶ Carrito ──▶ Checkout ──▶ Confirmación
+```
+
+- **Capa de datos** (`# 2. DATA LAYER`): `CATEGORIES`, `HOUSE_NAMES` (tiendas),
+  `PRODUCT_TEMPLATE` (menú). Reemplázalos por consultas a tu base de datos
+  real cuando pases a producción — el resto del código no cambia.
+- **Capa de estado** (`# 3. STATE LAYER`): helpers `go()`, `add_to_cart()`,
+  `cart_total()`, etc. Todo botón funcional pasa por `go(pagina, **params)`.
+- **Pantallas** (`# 6. SCREENS`): una función `render_*()` por pantalla,
+  totalmente independiente entre sí.
+- **Router** (`# 7. ROUTER`): un diccionario `{nombre: función}` que decide
+  qué pantalla dibujar según `st.session_state.page`.
+
+### Para llevarlo a producción real
+1. Reemplaza `HOUSE_NAMES` / `PRODUCT_TEMPLATE` por tablas reales (Postgres,
+   Supabase, Firebase, o una API propia).
+2. Reemplaza el carrito en memoria (`st.session_state.cart`) por un carrito
+   persistido por usuario en tu base de datos (así no se pierde al recargar
+   o cambiar de dispositivo).
+3. Conecta `render_checkout()` a una pasarela de pagos real (Culqi, Niubiz,
+   MercadoPago, Stripe) en vez del formulario de demostración.
+4. Añade autenticación real (hoy el usuario "GRUPO" es fijo/demo).
+
