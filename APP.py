@@ -66,7 +66,7 @@ import pandas as pd
 # =============================================================================
 st.set_page_config(
     page_title="Aurus Prime | Concierge de Lujo a Domicilio",
-    page_icon="✦",
+    page_icon="✨",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -76,6 +76,13 @@ st.set_page_config(
 # =============================================================================
 BRAND_NAME = "AURUS PRIME"
 BRAND_MONOGRAM = "AP"
+
+# Admin gate: set a real secret in .streamlit/secrets.toml as
+#   admin_passcode = "your-own-secret"
+# On Streamlit Cloud, set it under App settings -> Secrets instead of
+# committing it to the repo. Falls back to a default ONLY for local
+# testing — change it before deploying publicly.
+ADMIN_PASSCODE = st.secrets.get("admin_passcode", "aurus-admin-2026")
 
 DISTRICTS = [
     {"name": "Yanahuara", "city": "Arequipa"},
@@ -199,7 +206,7 @@ def get_stores(category_name: str):
 # =============================================================================
 PROVIDERS_XLSX_PATH = "data/proveedores_aurus_prime.xlsx"
 PROVIDERS_COLUMNS = [
-    "Tipo", "Nombre", "Correo", "Teléfono", "Distrito", "Mensaje",
+    "Rol", "Tipo", "Nombre", "Correo", "Teléfono", "Distrito", "Mensaje",
     "N° de solicitudes", "Primera solicitud", "Última solicitud",
 ]
 
@@ -207,7 +214,10 @@ PROVIDERS_COLUMNS = [
 def _load_providers_df() -> pd.DataFrame:
     if os.path.exists(PROVIDERS_XLSX_PATH):
         try:
-            return pd.read_excel(PROVIDERS_XLSX_PATH, dtype={"N° de solicitudes": "int64"})
+            df = pd.read_excel(PROVIDERS_XLSX_PATH, dtype={"N° de solicitudes": "int64"})
+            if "Rol" not in df.columns:
+                df.insert(0, "Rol", "Proveedor")  # backward-compat for files written before this column existed
+            return df
         except Exception:
             pass
     return pd.DataFrame(columns=PROVIDERS_COLUMNS)
@@ -228,10 +238,16 @@ def providers_excel_bytes() -> bytes:
     return buf.getvalue()
 
 
-def upsert_provider(ptype: str, name: str, email: str, phone: str, district: str, message: str) -> int:
-    """Add a new provider row, or — if the same Tipo+Nombre+Correo already
-    submitted before — increase 'N° de solicitudes' by 1 instead of
-    duplicating the row. Returns the resulting request count."""
+def upsert_provider(ptype: str, name: str, email: str, phone: str, district: str, message: str, role: str = "Proveedor") -> int:
+    """Add a new row (provider OR client — see `role`), or — if the same
+    Tipo+Nombre+Correo already submitted before — increase 'N° de
+    solicitudes' by 1 instead of duplicating the row. Returns the
+    resulting request count.
+
+    `role` is the new column that separates "Proveedor" (restaurante /
+    boutique / courier forms) from "Cliente" (a person registering an
+    account) inside the very same Excel file, as requested.
+    """
     df = _load_providers_df()
     now_str = datetime.now().strftime("%d/%m/%Y %H:%M")
 
@@ -254,7 +270,7 @@ def upsert_provider(ptype: str, name: str, email: str, phone: str, district: str
         count = int(df.loc[idx, "N° de solicitudes"])
     else:
         new_row = {
-            "Tipo": ptype, "Nombre": name, "Correo": email, "Teléfono": phone,
+            "Rol": role, "Tipo": ptype, "Nombre": name, "Correo": email, "Teléfono": phone,
             "Distrito": district, "Mensaje": message, "N° de solicitudes": 1,
             "Primera solicitud": now_str, "Última solicitud": now_str,
         }
@@ -296,6 +312,7 @@ defaults = {
     "partner_applications": [],
     "search_query": "",
     "tracking_order_id": None,
+    "is_admin": False,
 }
 for key, val in defaults.items():
     if key not in st.session_state:
@@ -350,7 +367,7 @@ def apply_coupon(code: str):
         st.session_state.coupon_code = code
         st.session_state.coupon_discount = COUPONS[code]
         add_notification(f"Cupón {code} aplicado (-{int(COUPONS[code]*100)}%).")
-        st.toast(f"Cupón {code} aplicado ✦", icon="✦")
+        st.toast(f"Cupón {code} aplicado ✦", icon="✨")
     else:
         st.warning("Cupón no válido.")
 
@@ -716,8 +733,14 @@ def render_register():
                 st.session_state.user_phone = phone
                 st.session_state.registered = True
                 st.session_state.free_shipping_until = datetime.now() + timedelta(weeks=3)
+                district_name = st.session_state.district["name"] if st.session_state.district else ""
+                upsert_provider(
+                    ptype="cliente", name=name, email=email, phone=phone,
+                    district=district_name, message="Registro de cuenta en Aurus Prime",
+                    role="Cliente",
+                )
                 add_notification("¡Bienvenido a Aurus Prime! Envío de cortesía activado por 3 semanas.")
-                st.toast("Cuenta creada — envío de cortesía activado ✦", icon="✦")
+                st.toast("Cuenta creada — envío de cortesía activado", icon="✨")
                 go("home")
 
 
@@ -803,7 +826,7 @@ def render_orders():
                 for item in o["items"]:
                     key = f"{item['store']}__{item['name']}"
                     st.session_state.cart[key] = {**item}
-                st.toast("Ítems agregados de nuevo al carrito ✦", icon="✦")
+                st.toast("Ítems agregados de nuevo al carrito ✦", icon="✨")
                 go("cart")
 
     with tab_prep:
@@ -970,15 +993,6 @@ def render_partner_form():
                     st.success("¡Solicitud enviada y guardada en nuestra base de proveedores! "
                                 "Nuestro equipo comercial te contactará en las próximas 48 horas.")
 
-    st.write("")
-    st.download_button(
-        "⬇️ Descargar base de proveedores (Excel)",
-        data=providers_excel_bytes(),
-        file_name="proveedores_aurus_prime.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        key="download_providers_partnerform",
-    )
-
 
 def render_category():
     cat_name = st.session_state.selected_category
@@ -1023,7 +1037,7 @@ def render_store():
             st.write("")
             if st.button("Agregar", key=f"add_{store}_{product['name']}"):
                 add_to_cart(store, product)
-                st.toast(f"{product['name']} agregado ✦", icon="✦")
+                st.toast(f"{product['name']} agregado ✦", icon="✨")
                 st.rerun()
 
 
@@ -1251,17 +1265,39 @@ def render_admin():
     if st.button("← Volver", key="back_admin"):
         go("home")
     st.markdown("<div class='section-title'><h2>🛠 Panel administrador (demo)</h2><div class='rule'></div></div>", unsafe_allow_html=True)
+
+    if not st.session_state.is_admin:
+        st.info("Acceso restringido: esta sección es solo para el dueño / administrador de Aurus Prime.")
+        with st.form("admin_login_form"):
+            pwd = st.text_input("Clave de administrador", type="password")
+            submitted = st.form_submit_button("Ingresar")
+            if submitted:
+                if pwd == ADMIN_PASSCODE:
+                    st.session_state.is_admin = True
+                    st.rerun()
+                else:
+                    st.error("Clave incorrecta.")
+        return
+
+    lc1, lc2 = st.columns([4, 1])
+    with lc2:
+        if st.button("Cerrar sesión admin", key="admin_logout"):
+            st.session_state.is_admin = False
+            st.rerun()
+
     st.markdown(
-        "<div class='scope-note'>Esta vista lee <b>solo los datos de tu sesión actual</b> (no hay base de datos "
-        "ni autenticación real todavía). Para un panel de administración real: crea una app separada, protégela "
-        "con login, y apunta a tu base de datos de producción — no a <code>st.session_state</code>.</div>",
+        "<div class='scope-note'>Los pedidos aquí abajo leen <b>solo los datos de tu sesión actual</b> "
+        "(no hay base de datos todavía). La base de proveedores/clientes sí lee un archivo real en disco — ver "
+        "aviso más abajo. Para un panel de administración real de producción: crea una app separada, protégela "
+        "con un login propio, y apunta a tu base de datos real — no a <code>st.session_state</code> ni a un "
+        "passcode compartido como este.</div>",
         unsafe_allow_html=True,
     )
     m1, m2, m3 = st.columns(3)
     total_rev = sum(o["breakdown"]["total"] for o in st.session_state.orders)
     m1.metric("Pedidos (sesión)", len(st.session_state.orders))
     m2.metric("Ingresos (sesión)", f"S/ {total_rev:.2f}")
-    m3.metric("Leads de socios (Excel)", len(_load_providers_df()))
+    m3.metric("Registros en Excel", len(_load_providers_df()))
 
     st.markdown("<div class='section-title'><h2>Pedidos</h2><div class='rule'></div></div>", unsafe_allow_html=True)
     if st.session_state.orders:

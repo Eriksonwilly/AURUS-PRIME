@@ -77,3 +77,25 @@ Home ──▶ Categoría ──▶ Tienda ──▶ Carrito ──▶ Checkout 
    MercadoPago, Stripe) en vez del formulario de demostración.
 4. Añade autenticación real (hoy el usuario "GRUPO" es fijo/demo).
 
+## Panel administrador y base de proveedores (Excel)
+
+- Los formularios "Registra tu restaurante / tienda", "Postula como Aurus
+  Courier" y el registro de clientes escriben en
+  `data/proveedores_aurus_prime.xlsx`, con una columna **Rol**
+  (`Proveedor` / `Cliente`) y una columna **N° de solicitudes** que sube
+  en vez de duplicar la fila cuando la misma persona vuelve a enviar el
+  formulario.
+- **Descargar ese Excel es exclusivo del panel administrador**, protegido
+  por una clave (`admin_passcode`). Configúrala así:
+  - Local: copia `.streamlit/secrets.toml.example` a
+    `.streamlit/secrets.toml` y cambia el valor (ese archivo real **no**
+    debe subirse a GitHub — agrégalo a tu `.gitignore`).
+  - Streamlit Community Cloud: pega la misma clave en
+    *App settings → Secrets*.
+  - Si no configuras nada, la app usa una clave por defecto solo para
+    pruebas locales — cámbiala antes de publicar la app.
+- Recuerda: el disco de Streamlit Community Cloud es efímero. Este Excel
+  es ideal para demos y descargas manuales, pero no para guardar datos de
+  proveedores/clientes de forma permanente — para eso, migra a una base
+  de datos real o a Google Sheets.
+
