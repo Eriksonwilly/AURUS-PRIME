@@ -57,6 +57,9 @@ Run locally:
 
 import streamlit as st
 from datetime import datetime, timedelta
+import os
+from io import BytesIO
+import pandas as pd
 
 # =============================================================================
 # 1. PAGE CONFIGURATION
@@ -174,8 +177,94 @@ def get_stores(category_name: str):
 
 
 # =============================================================================
-# 3. STATE LAYER
+# 2B. PROVEEDORES — Excel ledger for the 3 partner forms (restaurante,
+#    boutique, courier). This is a real file on disk (not just session
+#    memory), so it survives page reloads and other visitors' sessions
+#    during the app's lifetime.
+#
+#    IMPORTANT (be transparent with yourself about this): Streamlit
+#    Community Cloud's filesystem is EPHEMERAL — it resets whenever the
+#    app reboots/redeploys (new commit, sleep after inactivity, etc.).
+#    For a real commercial list of providers you must persist this to a
+#    real database or to cloud storage (S3, Google Sheets API, Supabase)
+#    instead of a local .xlsx file. This Excel file is a solid MVP for
+#    demoing/testing and for manually downloading a snapshot, but it is
+#    NOT durable long-term storage on Streamlit Cloud.
+#
+#    Nobody is emailed automatically today — "te contactaremos en 48
+#    horas" means a human on your team should open this Excel (via the
+#    download button below or the admin panel) and reach out manually.
+#    If you want an automatic email/Slack alert on every new submission,
+#    that needs an SMTP/webhook integration wired in `upsert_provider()`.
 # =============================================================================
+PROVIDERS_XLSX_PATH = "data/proveedores_aurus_prime.xlsx"
+PROVIDERS_COLUMNS = [
+    "Tipo", "Nombre", "Correo", "Teléfono", "Distrito", "Mensaje",
+    "N° de solicitudes", "Primera solicitud", "Última solicitud",
+]
+
+
+def _load_providers_df() -> pd.DataFrame:
+    if os.path.exists(PROVIDERS_XLSX_PATH):
+        try:
+            return pd.read_excel(PROVIDERS_XLSX_PATH, dtype={"N° de solicitudes": "int64"})
+        except Exception:
+            pass
+    return pd.DataFrame(columns=PROVIDERS_COLUMNS)
+
+
+def _save_providers_df(df: pd.DataFrame):
+    os.makedirs(os.path.dirname(PROVIDERS_XLSX_PATH), exist_ok=True)
+    df.to_excel(PROVIDERS_XLSX_PATH, index=False)
+
+
+def providers_excel_bytes() -> bytes:
+    """In-memory .xlsx for the download button (works even if the disk
+    write above is on an ephemeral filesystem)."""
+    df = _load_providers_df()
+    buf = BytesIO()
+    with pd.ExcelWriter(buf, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name="Proveedores")
+    return buf.getvalue()
+
+
+def upsert_provider(ptype: str, name: str, email: str, phone: str, district: str, message: str) -> int:
+    """Add a new provider row, or — if the same Tipo+Nombre+Correo already
+    submitted before — increase 'N° de solicitudes' by 1 instead of
+    duplicating the row. Returns the resulting request count."""
+    df = _load_providers_df()
+    now_str = datetime.now().strftime("%d/%m/%Y %H:%M")
+
+    if not df.empty:
+        match = (
+            (df["Tipo"].astype(str) == ptype)
+            & (df["Nombre"].astype(str).str.strip().str.lower() == name.strip().lower())
+            & (df["Correo"].astype(str).str.strip().str.lower() == email.strip().lower())
+        )
+    else:
+        match = pd.Series([], dtype=bool)
+
+    if match.any():
+        idx = df[match].index[0]
+        df.loc[idx, "N° de solicitudes"] = int(df.loc[idx, "N° de solicitudes"]) + 1
+        df.loc[idx, "Teléfono"] = phone or df.loc[idx, "Teléfono"]
+        df.loc[idx, "Distrito"] = district
+        df.loc[idx, "Mensaje"] = message
+        df.loc[idx, "Última solicitud"] = now_str
+        count = int(df.loc[idx, "N° de solicitudes"])
+    else:
+        new_row = {
+            "Tipo": ptype, "Nombre": name, "Correo": email, "Teléfono": phone,
+            "Distrito": district, "Mensaje": message, "N° de solicitudes": 1,
+            "Primera solicitud": now_str, "Última solicitud": now_str,
+        }
+        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+        count = 1
+
+    _save_providers_df(df)
+    return count
+
+
 defaults = {
     "user_name": "Invitado",
     "user_email": "",
@@ -848,6 +937,14 @@ def render_partner_form():
     if st.button("← Volver", key="back_partner"):
         go("home")
     st.markdown(f"<div class='section-title'><h2>{icon} {title}</h2><div class='rule'></div></div>", unsafe_allow_html=True)
+    st.markdown(
+        "<div class='scope-note'>Al enviar, tus datos se guardan en nuestra base de proveedores en Excel "
+        "(<code>data/proveedores_aurus_prime.xlsx</code>). Si ya te habías registrado antes con el mismo nombre y "
+        "correo, no se duplica: solo sube el contador <b>N° de solicitudes</b>. Hoy nadie recibe un correo "
+        "automático — un miembro de tu equipo comercial revisa este archivo (o el Panel administrador) para "
+        "contactarte en 48 horas.</div>",
+        unsafe_allow_html=True,
+    )
     with st.form("partner_form"):
         name = st.text_input("Nombre del negocio / tuyo")
         contact_email = st.text_input("Correo de contacto")
@@ -859,12 +956,28 @@ def render_partner_form():
             if not name or not contact_email:
                 st.error("Nombre y correo son obligatorios.")
             else:
+                count = upsert_provider(ptype, name, contact_email, phone, district, message)
                 st.session_state.partner_applications.append({
                     "type": ptype, "name": name, "email": contact_email, "phone": phone,
                     "district": district, "message": message, "created": datetime.now(),
                 })
-                add_notification(f"Solicitud de '{title}' enviada. Te contactaremos pronto.")
-                st.success("¡Solicitud enviada! Nuestro equipo comercial te contactará en las próximas 48 horas.")
+                if count > 1:
+                    add_notification(f"'{name}' volvió a postular a '{title}' — ya lleva {count} solicitudes.")
+                    st.success(f"¡Gracias de nuevo! Ya van **{count} solicitudes** tuyas registradas. "
+                               f"Nuestro equipo comercial te contactará en las próximas 48 horas.")
+                else:
+                    add_notification(f"Nueva solicitud de '{title}': {name}.")
+                    st.success("¡Solicitud enviada y guardada en nuestra base de proveedores! "
+                                "Nuestro equipo comercial te contactará en las próximas 48 horas.")
+
+    st.write("")
+    st.download_button(
+        "⬇️ Descargar base de proveedores (Excel)",
+        data=providers_excel_bytes(),
+        file_name="proveedores_aurus_prime.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        key="download_providers_partnerform",
+    )
 
 
 def render_category():
@@ -1148,7 +1261,7 @@ def render_admin():
     total_rev = sum(o["breakdown"]["total"] for o in st.session_state.orders)
     m1.metric("Pedidos (sesión)", len(st.session_state.orders))
     m2.metric("Ingresos (sesión)", f"S/ {total_rev:.2f}")
-    m3.metric("Leads de socios", len(st.session_state.partner_applications))
+    m3.metric("Leads de socios (Excel)", len(_load_providers_df()))
 
     st.markdown("<div class='section-title'><h2>Pedidos</h2><div class='rule'></div></div>", unsafe_allow_html=True)
     if st.session_state.orders:
@@ -1161,16 +1274,29 @@ def render_admin():
     else:
         st.caption("Sin pedidos todavía.")
 
-    st.markdown("<div class='section-title'><h2>Solicitudes de socios / couriers</h2><div class='rule'></div></div>", unsafe_allow_html=True)
-    if st.session_state.partner_applications:
-        for a in st.session_state.partner_applications:
-            st.markdown(
-                f"<div class='order-card'><h4>{a['name']} · {a['type']}</h4>"
-                f"<div class='meta'>{a['email']} · {a['phone']} · {a['district']}</div></div>",
-                unsafe_allow_html=True,
-            )
+    st.markdown("<div class='section-title'><h2>📋 Base de proveedores (Excel)</h2><div class='rule'></div></div>", unsafe_allow_html=True)
+    st.markdown(
+        "<div class='scope-note'>Esta tabla sí se lee desde un archivo real en disco "
+        "(<code>data/proveedores_aurus_prime.xlsx</code>), no solo de la sesión — pero recuerda: en Streamlit "
+        "Community Cloud el disco es efímero (se reinicia con cada redeploy). Para conservarla permanentemente, "
+        "conecta esto a una base de datos o a Google Sheets.</div>",
+        unsafe_allow_html=True,
+    )
+    providers_df = _load_providers_df()
+    if providers_df.empty:
+        st.caption("Sin proveedores registrados todavía.")
     else:
-        st.caption("Sin solicitudes todavía.")
+        st.dataframe(providers_df, use_container_width=True, hide_index=True)
+        repeats = providers_df[providers_df["N° de solicitudes"] > 1]
+        if not repeats.empty:
+            st.caption(f"🔁 {len(repeats)} proveedor(es) han postulado más de una vez.")
+    st.download_button(
+        "⬇️ Descargar base de proveedores (Excel)",
+        data=providers_excel_bytes(),
+        file_name="proveedores_aurus_prime.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        key="download_providers_admin",
+    )
 
 
 # =============================================================================
